@@ -77,5 +77,6 @@ Add prefixes:
 
 ```shell
 cat ../data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 's/"//g' | while read -r a b c; do ls -l $(echo $b); done
-cat ../data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 's/"//g' | while read -r a b c; do echo $a $b; done
+cat ../data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 1,1d | sed 's/"//g' | while read -r a b c; do ls -l $(echo $b); done
+
 ```
