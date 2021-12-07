@@ -16,7 +16,7 @@ cargo build --release
 
 git clone --recursive https://github.com/ekg/wfmash.git
 cd wfmash
-git checkout 1f15867dd1f186b6499ebea1a450ab2a9edcb297
+git checkout 0a6c3b4ed296c8ef48a7fbd9d8f8af7de00ec0fb
 cmake -H. -Bbuild && cmake --build build -- -j 48
 
 git clone --recursive https://github.com/ekg/seqwish.git
@@ -39,8 +39,8 @@ git clone --recursive https://github.com/AndreaGuarracino/HG002_assemblies_asses
 Create the `assemblies` folder:
 
 ```shell
-mkdir -p /lizardfs/guarracino/assemblies/
-cd /lizardfs/guarracino/assemblies/
+mkdir -p /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/
+cd /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/
 ```
 
 Download HG002 assemblies:
@@ -96,10 +96,58 @@ Add prefixes:
 
 ```shell
 # Check existance
-#cat ../data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 's/"//g' | while read -r Id Filename AbbreviatedName; do ls -l $(echo $Filename); done
+#cat ../data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 1,1d | sed 's/"//g' | while read -r Id Filename AbbreviatedName; do ls -l $(echo $Filename); done
 
 cat ../data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 1,1d | sed 's/"//g' | while read -r Id Filename AbbreviatedName; do
-  AbbreviatedName2=$(echo $AbbreviatedName | sed 's/ /_/g')
-  ~/tools/fastix/target/release/fastix -p "${AbbreviatedName}#" $Filename | bgzip -@ 48 -c > AbbreviatedName2.fa.gz;
+  AbbreviatedName2=$(echo $AbbreviatedName | sed 's/ /_/g');
+  echo "$Filename -> ${AbbreviatedName2}.fa.gz"
+  ~/tools/fastix/target/release/fastix -p "${AbbreviatedName2}#" $Filename | bgzip -@ 48 -c > ${AbbreviatedName2}.fa.gz;
 done
+```
+
+Merge all assemblies:
+
+```shell
+# To merge assemblies sorted by ID
+FA_GZS=$(cat ../data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 1,1d | sed 's/"//g' | while read -r Id Filename AbbreviatedName; do AbbreviatedName2=$(echo $AbbreviatedName | sed 's/ /_/g'); echo ${AbbreviatedName2}.fa.gz; done | tr '\n' ' ')
+
+zcat $FA_GZS | bgzip -@ 48 -c > HG002_all.fa.gz
+samtools faidx HG002_all.fa.gz
+```
+
+## Mapping and Alignment
+
+Generate all-vs-all mappings:
+
+```shell
+mkdir -p /lizardfs/guarracino/HG002_assemblies_assessment/alignment/
+
+sbatch -p lowmem -c 48 --wrap 'cd /scratch && \time -v ~/tools/wfmash/build/bin/wfmash -X -s 20k -l 60k -p 95 -n 45 -k 16 -t 48 /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/HG002_all.fa.gz /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/HG002_all.fa.gz -m > HG002_all.s20k.l60k.p95.n45.k16.approx.paf && mv HG002_all.s20k.l60k.p95.n45.k16.approx.paf /lizardfs/guarracino/HG002_assemblies_assessment/alignment/'
+```
+
+Split the mappings in chunks:
+
+```shell
+cd /lizardfs/guarracino/alignment/
+python3 ~/tools/wfmash/scripts/split_approx_mappings_in_chunks.py /lizardfs/guarracino/alignment/HG002_all.s20k.l60k.p95.n45.k16.approx.paf 5
+```
+
+Run the alignments on multiple nodes:
+
+```shell
+seq 0 4 | while read i; do sbatch -p lowmem -c 48 --wrap 'cd /scratch && ~/tools/wfmash/build/bin/wfmash -X -s 20k -l 60k -p 95 -n 45 -k 16 -t 48 /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/HG002_all.fa.gz /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/HG002_all.fa.gz -i /lizardfs/guarracino/HG002_assemblies_assessment/alignment/HG002_all.s20k.l60k.p95.n45.k16.approx.paf.chunk_'$i'.paf | pigz -c > HG002_all.s20k.l60k.p95.n45.k16.approx.paf.chunk_'$i'.paf.gz && mv HG002_all.s20k.l60k.p95.n45.k16.approx.paf.chunk_'$i'.paf.gz /lizardfs/guarracino/HG002_assemblies_assessment/alignment/'; done
+```
+
+## Inducing the graph
+
+```shell
+mkdir -p /lizardfs/guarracino/graphs/
+
+# list all base-level alignment PAFs
+PAFS=$(ls HG002_all.s20k.l60k.p95.n45.k16.approx.paf.chunk_*.paf.gz | tr '\n' ',')
+PAFS=${input::-1}
+
+seqwish -s reference.fa -p PAFS -k 47 -g seqwish.gfa -B 10000000 -P
+
+sbatch -p lowmem -c 48 --wrap 'cd /scratch && \time -v ~/tools/seqwish/bin/seqwish -t 48 -s /lizardfs/guarracino/assemblies/HG002_all.fa.gz -p '$PAFS' -k 79 -B 50M -g HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.gfa -P && mv HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.gfa /lizardfs/guarracino/graphs/'
 ```
