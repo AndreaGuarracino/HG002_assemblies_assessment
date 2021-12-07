@@ -2,16 +2,27 @@
 
 Pangenomic assessment of HG002 assemblies
 
-## Versions
+## Tools
 
 # TODO###
 
 ```shell
-cd ~/tools
+mkdir -p ~/tools $$ cd ~/tools
+
 git clone --recursive https://github.com/ekg/fastix.git
 cd fastix
 git checkout 331c1159ea16625ee79d1a82522e800c99206834
 cargo build --release
+
+git clone --recursive https://github.com/ekg/wfmash.git
+cd wfmash
+git checkout 1f15867dd1f186b6499ebea1a450ab2a9edcb297
+cmake -H. -Bbuild && cmake --build build -- -j 48
+
+git clone --recursive https://github.com/ekg/seqwish.git
+cd seqwish
+git checkout beb7a3805c5af599b8425db94b9524eecbfc73e0 # speedwish branch
+cmake -H. -Bbuild && cmake --build build -- -j 48
 ```
 
 ## Preparation
@@ -23,13 +34,13 @@ cd /lizardfs/guarracino/
 git clone --recursive https://github.com/AndreaGuarracino/HG002_assemblies_assessment.git
 ```
 
-## Download data
+## Download and prepare data
 
 Create the `assemblies` folder:
 
 ```shell
-mkdir -p assemblies/
-cd assemblies/
+mkdir -p /lizardfs/guarracino/assemblies/
+cd /lizardfs/guarracino/assemblies/
 ```
 
 Download HG002 assemblies:
