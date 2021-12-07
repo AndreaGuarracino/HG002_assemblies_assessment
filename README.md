@@ -6,6 +6,14 @@ Pangenomic assessment of HG002 assemblies
 
 # TODO###
 
+```shell
+cd ~/tools
+git clone --recursive https://github.com/ekg/fastix.git
+cd fastix
+git checkout 331c1159ea16625ee79d1a82522e800c99206834
+cargo build --release
+```
+
 ## Preparation
 
 Clone the repository:
@@ -76,7 +84,11 @@ rm -rf hg002_crossstitch_upload/
 Add prefixes:
 
 ```shell
-cat ../data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 's/"//g' | while read -r a b c; do ls -l $(echo $b); done
-cat ../data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 1,1d | sed 's/"//g' | while read -r a b c; do ls -l $(echo $b); done
+# Check existance
+#cat ../data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 's/"//g' | while read -r Id Filename AbbreviatedName; do ls -l $(echo $Filename); done
 
+cat ../data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 1,1d | sed 's/"//g' | while read -r Id Filename AbbreviatedName; do
+  AbbreviatedName2=$(echo $AbbreviatedName | sed 's/ /_/g')
+  ~/tools/fastix/target/release/fastix -p "${AbbreviatedName}#" $Filename | bgzip -@ 48 -c > AbbreviatedName2.fa.gz;
+done
 ```
