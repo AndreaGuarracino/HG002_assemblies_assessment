@@ -67,11 +67,15 @@ Decompress:
 
 ```shell
 ls *a.gz | while read f; do gunzip $f; done
-ls *tar.gz | while read f; do tar -xvzf $f; done
+ls *tar.gz | while read f; do tar -xvzf $f; done && rm *tar.gz
+mv hg002_crossstitch_upload/hap1.fa hg002_crossstitch_upload_hap1.fa
+mv hg002_crossstitch_upload/hap2.fa hg002_crossstitch_upload_hap2.fa
+rm -rf hg002_crossstitch_upload/
 ```
 
 Add prefixes:
 
 ```shell
-
+cat ../data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 's/"//g' | while read -r a b c; do ls -l $(echo $b); done
+cat ../data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 's/"//g' | while read -r a b c; do echo $a $b; done
 ```
