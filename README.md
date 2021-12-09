@@ -4,8 +4,6 @@ Pangenomic assessment of HG002 assemblies
 
 ## Tools
 
-# TODO###
-
 ```shell
 mkdir -p ~/tools $$ cd ~/tools
 
@@ -16,12 +14,12 @@ cargo build --release
 
 git clone --recursive https://github.com/ekg/wfmash.git
 cd wfmash
-git checkout 0a6c3b4ed296c8ef48a7fbd9d8f8af7de00ec0fb
+git checkout 09e73eb3fcf24b8b7312b8890dd0741933f0d1cd
 cmake -H. -Bbuild && cmake --build build -- -j 48
 
 git clone --recursive https://github.com/ekg/seqwish.git
 cd seqwish
-git checkout beb7a3805c5af599b8425db94b9524eecbfc73e0 # speedwish branch
+git checkout ccfefb016fcfc9937817ce61dc06bbcf382be75e
 cmake -H. -Bbuild && cmake --build build -- -j 48
 ```
 
@@ -123,13 +121,15 @@ Generate all-vs-all mappings:
 mkdir -p /lizardfs/guarracino/HG002_assemblies_assessment/alignment/
 
 sbatch -p lowmem -c 48 --wrap 'cd /scratch && \time -v ~/tools/wfmash/build/bin/wfmash -X -s 20k -l 60k -p 95 -n 45 -k 16 -t 48 /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/HG002_all.fa.gz /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/HG002_all.fa.gz -m > HG002_all.s20k.l60k.p95.n45.k16.approx.paf && mv HG002_all.s20k.l60k.p95.n45.k16.approx.paf /lizardfs/guarracino/HG002_assemblies_assessment/alignment/'
+sbatch -p 386mem -w octopus06 -c 48 --wrap 'cd /scratch && \time -v ~/tools/wfmash/build/bin/wfmash -X -s 20k -l 60k -p 90 -n 45 -k 16 -t 48 /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/HG002_all.fa.gz /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/HG002_all.fa.gz -m > HG002_all.s20k.l60k.p90.n45.k16.approx.paf && mv HG002_all.s20k.l60k.p90.n45.k16.approx.paf /lizardfs/guarracino/HG002_assemblies_assessment/alignment/'
+
 ```
 
 Split the mappings in chunks:
 
 ```shell
-cd /lizardfs/guarracino/alignment/
-python3 ~/tools/wfmash/scripts/split_approx_mappings_in_chunks.py /lizardfs/guarracino/alignment/HG002_all.s20k.l60k.p95.n45.k16.approx.paf 5
+cd /lizardfs/guarracino/HG002_assemblies_assessment/alignment/
+python3 ~/tools/wfmash/scripts/split_approx_mappings_in_chunks.py /lizardfs/guarracino/HG002_assemblies_assessment/alignment/HG002_all.s20k.l60k.p95.n45.k16.approx.paf 5
 ```
 
 Run the alignments on multiple nodes:
@@ -138,16 +138,14 @@ Run the alignments on multiple nodes:
 seq 0 4 | while read i; do sbatch -p lowmem -c 48 --wrap 'cd /scratch && ~/tools/wfmash/build/bin/wfmash -X -s 20k -l 60k -p 95 -n 45 -k 16 -t 48 /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/HG002_all.fa.gz /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/HG002_all.fa.gz -i /lizardfs/guarracino/HG002_assemblies_assessment/alignment/HG002_all.s20k.l60k.p95.n45.k16.approx.paf.chunk_'$i'.paf | pigz -c > HG002_all.s20k.l60k.p95.n45.k16.approx.paf.chunk_'$i'.paf.gz && mv HG002_all.s20k.l60k.p95.n45.k16.approx.paf.chunk_'$i'.paf.gz /lizardfs/guarracino/HG002_assemblies_assessment/alignment/'; done
 ```
 
+
 ## Inducing the graph
 
 ```shell
-mkdir -p /lizardfs/guarracino/graphs/
+mkdir -p /lizardfs/guarracino/HG002_assemblies_assessment/graphs/
 
 # list all base-level alignment PAFs
-PAFS=$(ls HG002_all.s20k.l60k.p95.n45.k16.approx.paf.chunk_*.paf.gz | tr '\n' ',')
-PAFS=${input::-1}
-
-seqwish -s reference.fa -p PAFS -k 47 -g seqwish.gfa -B 10000000 -P
-
-sbatch -p lowmem -c 48 --wrap 'cd /scratch && \time -v ~/tools/seqwish/bin/seqwish -t 48 -s /lizardfs/guarracino/assemblies/HG002_all.fa.gz -p '$PAFS' -k 79 -B 50M -g HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.gfa -P && mv HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.gfa /lizardfs/guarracino/graphs/'
+PAFS=$(ls /lizardfs/guarracino/HG002_assemblies_assessment/alignment/HG002_all.s20k.l60k.p95.n45.k16.approx.paf.chunk_*.paf.gz | tr '\n' ',')
+PAFS=${PAFS::-1}
+sbatch -p highmem -w octopus02 -c 48 --wrap 'cd /scratch && \time -v ~/tools/seqwish/bin/seqwish -t 48 -s /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/HG002_all.fa.gz -p '$PAFS' -k 79 -B 50M -g HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.gfa -P && mv HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.gfa /lizardfs/guarracino/HG002_assemblies_assessment/graphs/'
 ```
