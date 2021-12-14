@@ -125,9 +125,60 @@ cat references/grch38.fa references/chm13.fa <(zcat assemblies/HG002_20211005.ma
 samtools faidx HG002_20211005+refs.fa.gz
 ```
 
-## Build the graph with PGGB
+## Build the PGGB graph 
 
 ```shell
 sbatch -p lowmem -c 48 --wrap 'hostname; cd /scratch && ~/tools/pggb/pggb-5d2601127e8d08b39c8b05906240e5b50e46baf3 -i /lizardfs/guarracino/HG002_assemblies_assessment/HG002_20211005+refs.fa.gz -o HG002_20211005+refs -t 48 -p 98 -s 100000 -n 4 -k 311 -O 0.03 -T 48 -U -v -L -V chm13:#,grch38:# ; mv /scratch/HG002_20211005+refs /lizardfs/guarracino/HG002_assemblies_assessment/'
 ```
+
+```shell
+cd /lizardfs/guarracino/HG002_assemblies_assessment/HG002_20211005+refs
+~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f paths -i HG002_20211005+refs.fa.gz.3525971.4030258.adf7ed8.smooth.og -L | cut -f 1 -d '#' | uniq > HG002_20211005+refs.fa.gz.3525971.4030258.adf7ed8.smooth.prefix.txt
+
+~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i HG002_20211005+refs.fa.gz.3525971.4030258.adf7ed8.smooth.og -o HG002_20211005+refs.fa.gz.3525971.4030258.adf7ed8.smooth.og.viz_inv.M.png -x 1500 -y 500 -a 10 -z -I Consensus_ -M HG002_20211005+refs/HG002_20211005+refs.fa.gz.3525971.4030258.adf7ed8.smooth.prefix.txt
+
+```
+
+wget https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/genes/hg38.ncbiRefSeq.gtf.gz
+zgrep '_alt\|_fix\|_random\|chrUn_' hg38.ncbiRefSeq.gtf.gz -v | sed -e 's/^/grch38#/' > hg38.ncbiRefSeq.grch38.coordinates.gtf
+
+## C4 _locus_
+
+Find C4 coordinates:
+
+```shell
+mkdir -p /lizardfs/guarracino/HG002_assemblies_assessment/C4_locus
+cd /lizardfs/guarracino/HG002_assemblies_assessment/C4_locus
+
+
+wget http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes
+wget https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/genes/hg38.ncbiRefSeq.gtf.gz
+zgrep 'gene_id "C4A"\|gene_id "C4B"' hg38.ncbiRefSeq.gtf.gz |
+  awk '$1 == "chr6"' | cut -f 1,4,5 |
+  bedtools sort | bedtools merge -d 15000 | bedtools slop -l 10000 -r 20000 -g hg38.chrom.sizes |
+  sed 's/chr6/grch38#chr6/g' > hg38.ncbiRefSeq.C4.coordinates.bed
+```
+
+Extraction, explosion, optimization, and sorting:
+
+```shell
+path_graph=/lizardfs/guarracino/HG002_assemblies_assessment/HG002_20211005+refs/HG002_20211005+refs.fa.gz.3525971.4030258.adf7ed8.smooth.og
+prefix=$(basename ${path_graph} .og)
+odgi extract -i ${path_graph} -b hg38.ncbiRefSeq.C4.coordinates.bed -o - --full-range -t 48 -P |
+  odgi explode -i - --biggest 1 --sorting-criteria P --optimize -p $prefix.C4
+odgi sort -i $prefix.C4.0.og -o $prefix.C4.gYs.x100.og -p gYs -x 100 -t 48 -P
+
+```
+
+# odgi viz: default (binned) mode
+~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i $prefix.C4.gYs.x100.og -o "$(echo $prefix | tr '.' '_' )"_C4_sorted.png -c 40 -w 100 -y 50
+
+# odgi viz: color by strand
+~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i $prefix.C4.gYs.x100.og -o "$(echo $prefix | tr '.' '_' )"_C4_sorted_z.png -c 40 -w 100 -y 50 -z
+
+# odgi viz: color by position
+~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i $prefix.C4.gYs.x100.og -o "$(echo $prefix | tr '.' '_' )"_C4_sorted_du.png -c 40 -w 100 -y 50 -du
+
+# odgi viz: color by depth
+~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i $prefix.C4.gYs.x100.og -o "$(echo $prefix| tr '.' '_' )"_C4_sorted_m.png -c 40 -w 100 -y 50 -m -B Spectral:4
 
