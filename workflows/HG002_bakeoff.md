@@ -1,11 +1,11 @@
-# HG002 bakeoff
+# HG002 bake off
 
-Pangenomic assessment of HG002 bakeoff assemblies
+Pangenomic assessment of HG002 bake off assemblies
 
 ## Tools
 
 ```shell
-mkdir -p ~/tools $$ cd ~/tools
+mkdir -p ~/tools && cd ~/tools
 
 git clone --recursive https://github.com/ekg/fastix.git
 cd fastix
@@ -45,7 +45,7 @@ cd /lizardfs/guarracino/
 git clone --recursive https://github.com/AndreaGuarracino/HG002_assemblies_assessment.git
 ```
 
-## Download and prepare data
+## Download and prepare the data
 
 Create the `assemblies` folder:
 
@@ -57,7 +57,7 @@ cd /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/
 Download HG002 assemblies:
 
 ```shell
-#Url: https://s3-us-west-2.amazonaws.com/human-pangenomics/index.html?prefix=publications/HG002_BAKEOFF_2021/HG002_Assessment/assemblies/
+# Url: https://s3-us-west-2.amazonaws.com/human-pangenomics/index.html?prefix=publications/HG002_BAKEOFF_2021/HG002_Assessment/assemblies/
 
 grep s3 ../data/HGRC_bakeoff_HG002_assemblies_identifiers.tsv | 
   cut -f 6 | 
@@ -89,6 +89,7 @@ Download the new HG002 reference assemblies:
 
 ```shell
 # Url: https://s3-us-west-2.amazonaws.com/human-pangenomics/index.html?prefix=submissions/21edcb42-02c4-4e9f-b226-6773e62484a4--RU-HG002-commons/assembly/curated_round2/
+
 wget https://s3-us-west-2.amazonaws.com/human-pangenomics/submissions/21edcb42-02c4-4e9f-b226-6773e62484a4--RU-HG002-commons/assembly/curated_round2/HG002.mat.cur.20211005.fasta.gz
 wget https://s3-us-west-2.amazonaws.com/human-pangenomics/submissions/21edcb42-02c4-4e9f-b226-6773e62484a4--RU-HG002-commons/assembly/curated_round2/HG002.pat.cur.20211005.fasta.gz
 ```
@@ -106,7 +107,7 @@ rm -rf hg002_crossstitch_upload/
 Add prefixes:
 
 ```shell
-# Check existance
+# Check existence
 #cat ../data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 1,1d | sed 's/"//g' | while read -r Id Filename AbbreviatedName; do ls -l $(echo $Filename); done
 
 cat ../data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 1,1d | sed 's/"//g' | while read -r Id Filename AbbreviatedName; do
@@ -168,18 +169,14 @@ seq 0 4 | while read i; do sbatch -p lowmem -c 48 --wrap 'cd /scratch && ~/tools
 mkdir -p /lizardfs/guarracino/HG002_assemblies_assessment/graphs/
 
 # -s 20k -l 60k -p 95
-# list all base-level alignment PAFs
 PAFS=$(ls /lizardfs/guarracino/HG002_assemblies_assessment/alignment/HG002_all.s20k.l60k.p95.n45.k16.approx.paf.chunk_*.paf.gz | tr '\n' ',')
 PAFS=${PAFS::-1}
 sbatch -p highmem -w octopus02 -c 48 --wrap 'cd /scratch && \time -v ~/tools/seqwish/bin/seqwish-ccfefb016fcfc9937817ce61dc06bbcf382be75e -t 48 -s /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/HG002_all.fa.gz -p '$PAFS' -k 79 -B 50M -g HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.gfa -P && mv HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.gfa /lizardfs/guarracino/HG002_assemblies_assessment/graphs/'
 
 # -s 100k -l 300k -p 98
-# list all base-level alignment PAFs
 PAFS=$(ls /lizardfs/guarracino/HG002_assemblies_assessment/alignment/HG002_all.s100k.l300k.p98.n45.k16.approx.paf.chunk_*.paf.gz | tr '\n' ',')
 PAFS=${PAFS::-1}
 sbatch -p highmem -w octopus11 -c 48 --wrap 'cd /scratch && \time -v ~/tools/seqwish/bin/seqwish-ccfefb016fcfc9937817ce61dc06bbcf382be75e -t 48 -s /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/HG002_all.fa.gz -p '$PAFS' -k 79 -B 50M -g HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.gfa -P && mv HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.gfa /lizardfs/guarracino/HG002_assemblies_assessment/graphs/; ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f build -g /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.gfa -o /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.og -t 48 -P'
-#sbatch -p lowmem -c 48 --wrap 'cd /scratch && \time -v ~/tools/seqwish/bin/seqwish-ccfefb016fcfc9937817ce61dc06bbcf382be75e -t 48 -s /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/HG002_all.fa.gz -p '$PAFS' -k 229 -B 50M -g HG002_all.s100k.l300k.p98.n45.k16.seqwish.k229.B50M.gfa -P && mv HG002_all.s100k.l300k.p98.n45.k16.seqwish.k229.B50M.gfa /lizardfs/guarracino/HG002_assemblies_assessment/graphs/'
-#sbatch -p lowmem -c 48 --wrap 'cd /scratch && \time -v ~/tools/seqwish/bin/seqwish-ccfefb016fcfc9937817ce61dc06bbcf382be75e -t 48 -s /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/HG002_all.fa.gz -p '$PAFS' -k 229 -l 229 -B 50M -g HG002_all.s100k.l300k.p98.n45.k16.seqwish.k229.l229.B50M.gfa -P && mv HG002_all.s100k.l300k.p98.n45.k16.seqwish.k229.l229.B50M.gfa /lizardfs/guarracino/HG002_assemblies_assessment/graphs/'
 ```
 
 
@@ -193,8 +190,6 @@ Build:
 
 # -s 100k -l 300k -p 98
 \time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f build -g HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.gfa -o /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.og -t 48 -P
-#\time -v  ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f build -g /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k229.B50M.gfa -o /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k229.B50M.og -t 48 -P
-#\time -v  ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f build -g /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k229.l229.B50M.gfa -o /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k229.l299.B50M.og -t 48 -P
 ```
 
 Statistics:
@@ -213,39 +208,41 @@ Sort:
 # -s 20k -l 60k -p 95
 # -p Y
 sbatch -p highmem -w octopus11 -c 48 --wrap 'hostname; cd /scratch && ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f sort -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.og -o /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Y.x100.og -t 48 -Y -x 100 -P'
-# -p gYs
-sbatch -p highmem -w octopus02 -c 48 --wrap 'hostname; cd /scratch && ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f sort -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.og -o /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.gYs.x100.og -t 48 -p gYs -x 100 -P'
+# -p Ys
+sbatch -p highmem -w octopus11 -c 48 --wrap 'hostname; cd /scratch && ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f sort -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Y.x100.og -o /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Ys.x100.og -t 48 -p s -P'
 # -p Ygs
 sbatch -p highmem -w octopus02 -c 48 --wrap 'hostname; cd /scratch && ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f sort -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.og -o /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Ygs.x100.og -t 48 -p Ygs -x 100 -P'
 
 # -s 100k -l 300k -p 98
 # -p Y
 sbatch -p highmem -w octopus02 -c 48 --wrap 'hostname; cd /scratch && ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f sort -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.og -o /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Y.x100.og -t 48 -Y -x 100 -P'
-
-# -p Ygs
-#sbatch -p highmem -w octopus11 -c 48 --wrap 'hostname; cd /scratch && ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f sort -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.Y.x100.B50M.og -o /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Ygs.x100.og -t 48 -p gs -P'
+# -p Ys
+sbatch -p highmem -w octopus02 -c 48 --wrap 'hostname; cd /scratch && ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f sort -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Y.x100.og  -o /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Ys.x100.og -t 48 -p s -P'
 ```
 
 Plots:
 
 ```shell
 # -s 20k -l 60k -p 95
-~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f paths -i HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.og -L | cut -f 1 -d '#' | uniq > HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.prefix.txt
+sbatch -p headnode -w octopus01 -c 48 --wrap "\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f paths -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.og -L | cut -f 1 -d '#' | sed 's/$/#/g' | uniq > HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.prefix.txt"
 # -p Y
-\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Y.x100.og -o HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Y.x100.z.M.png -z -M HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.prefix.txt
-\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Y.x100.og -o HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Y.x100.m.Spectral4.M.png -m -B Spectral:4 -M HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.prefix.txt
-# -p gYs
-\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.gYs.x100.og -o HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.gYs.x100.z.M.png -z -M HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.prefix.txt
-\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.gYs.x100.og -o HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.gYs.x100.m.Spectral4.M.png -m -B Spectral:4 -M HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.prefix.txt
+sbatch -p headnode -w octopus01 -c 48 --wrap "\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Y.x100.og -o HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Y.x100.z.M.png -z -M HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.prefix.txt -P"
+sbatch -p headnode -w octopus01 -c 48 --wrap "\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Y.x100.og -o HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Y.x100.m.Spectral4.M.png -m -B Spectral:4 -M HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.prefix.txt -P"
+# -p Ys
+sbatch -p headnode -w octopus01 -c 48 --wrap "\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Ys.x100.og -o HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Ys.x100.z.M.png -z -M HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.prefix.txt -P"
+sbatch -p headnode -w octopus01 -c 48 --wrap "\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Ys.x100.og -o HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Ys.x100.m.Spectral4.M.png -m -B Spectral:4 -M HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.prefix.txt -P"
 # -p Ygs
-#\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Ygs.x100.og -o HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Ygs.x100.z.M.png -z -M HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.prefix.txt
-#\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Ygs.x100.og -o HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Ygs.x100.m.Spectral4.M.png -m -B Spectral:4 -M HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.prefix.txt
+sbatch -p headnode -w octopus01 -c 48 --wrap "\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Ygs.x100.og -o HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Ygs.x100.z.M.png -z -M HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.prefix.txt -P"
+sbatch -p headnode -w octopus01 -c 48 --wrap "\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Ygs.x100.og -o HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Ygs.x100.m.Spectral4.M.png -m -B Spectral:4 -M HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.prefix.txt -P"
 
 # -s 100k -l 300k -p 98
-~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f paths -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.og -L | cut -f 1 -d '#' | uniq > HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.prefix.txt
+sbatch -p headnode -w octopus01 -c 48 --wrap "\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f paths -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.og -L | cut -f 1 -d '#'  sed 's/$/#/g' | uniq > HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.prefix.txt"
 # -p Y
-\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Y.x100.og -o /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Y.x100.z.M.png -z -M HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.prefix.txt
-\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Y.x100.og -o /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Y.x100.m.Spectral4.M.png -m -B Spectral:4 -M HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.prefix.txt
+sbatch -p headnode -w octopus01 -c 48 --wrap '\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Y.x100.og -o /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Y.x100.z.M.png -z -M HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.prefix.txt -P'
+sbatch -p headnode -w octopus01 -c 48 --wrap '\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Y.x100.og -o /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Y.x100.m.Spectral4.M.png -m -B Spectral:4 -M HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.prefix.txt -P'
+# -p Ys
+sbatch -p headnode -w octopus01 -c 48 --wrap '\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Ys.x100.og -o /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Ys.x100.z.M.png -z -M HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.prefix.txt -P'
+sbatch -p headnode -w octopus01 -c 48 --wrap '\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Ys.x100.og -o /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Ys.x100.m.Spectral4.M.png -m -B Spectral:4 -M HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.prefix.txt -P'
 ```
 
 
@@ -262,5 +259,3 @@ sbatch -p lowmem -c 48 --wrap 'hostname; cd /scratch && ~/tools/odgi/bin/odgi-67
 # -s 100k -l 300k -p 98
 sbatch -p lowmem -c 48 --wrap 'hostname; cd /scratch && ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f paths -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.og -d -D "#" -t 48 > HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.dist.tsv && mv HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.dist.tsv /lizardfs/guarracino/HG002_assemblies_assessment/matrix/'
 ```
-
-xxxx
