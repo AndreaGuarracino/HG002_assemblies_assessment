@@ -1,6 +1,4 @@
-# HG002 bake off
-
-Pangenomic assessment of HG002 bake off assemblies
+# Pangenomic assessment of HG002 assemblies
 
 ## Tools
 
@@ -180,7 +178,7 @@ sbatch -p highmem -w octopus11 -c 48 --wrap 'cd /scratch && \time -v ~/tools/seq
 ```
 
 
-### Build the ODGI graph and sort it
+## Build the ODGI graph and sort it
 
 Build:
 
@@ -245,7 +243,7 @@ sbatch -p headnode -w octopus01 -c 48 --wrap '\time -v ~/tools/odgi/bin/odgi-67a
 sbatch -p headnode -w octopus01 -c 48 --wrap '\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Ys.x100.og -o /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Ys.x100.m.Spectral4.M.png -m -B Spectral:4 -M HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.prefix.txt -P'
 ```
 
-### Partitioning
+## Partitioning
 
 Map each assembly against the scaffolded references:
 
@@ -278,7 +276,7 @@ cut -f 1 HG002_all.vs.chm13+grch38.s50k.l150k.p90.k16.N.chr1to22.bed > HG002_all
 Create partitioned graphs:
 
 ```shell
-# -s 100k -l 300k -p 98
+# -s 20k -l 60k -p 95
 #
 #sbatch -p headnode -w octopus01 -c 48 --wrap '\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f extract -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Y.x100.og -o /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Y.x100.chrXY.og -b /lizardfs/guarracino/HG002_assemblies_assessment/alignmentHG002_all.vs.chm13+grch38.s50k.l150k.p90.k16.N.chrXY.bed -p /lizardfs/guarracino/HG002_assemblies_assessment/alignment/HG002_all.vs.chm13+grch38.s50k.l150k.p90.k16.N.chrXY.names.txt -t 48 -P'
 #sbatch -p headnode -w octopus01 -c 48 --wrap '\time -v ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f extract -i /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Y.x100.og -o /lizardfs/guarracino/HG002_assemblies_assessment/graphs/HG002_all.s20k.l60k.p95.n45.k16.seqwish.k79.B50M.Y.x100.chr1to22.og -b /lizardfs/guarracino/HG002_assemblies_assessment/alignment/HG002_all.vs.chm13+grch38.s50k.l150k.p90.k16.N.chr1to22.bed -p /lizardfs/guarracino/HG002_assemblies_assessment/alignment/HG002_all.vs.chm13+grch38.s50k.l150k.p90.k16.N.chr1to22.names.txt -t 48 -P'
@@ -292,7 +290,7 @@ sbatch -p headnode -w octopus01 -c 48 --wrap '\time -v ~/tools/odgi/bin/odgi-67a
 ```
 
 
-###  Multidimensional Scaling analysis
+##  Multidimensional Scaling analysis
 
 Get matrix of distances on the full graph:
 

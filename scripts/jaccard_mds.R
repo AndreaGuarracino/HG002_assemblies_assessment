@@ -214,7 +214,7 @@ for (N in c('All', 'XY', '1to22', seq(1, 22))){
         #  `Cell line` = c(`17` = '#D89000', `30` = '#DA62DB', `32` = '#55CC7D')
       )
     )
-    save_pheatmap_pdf(ph, path_heatmap, 21, 18)  
+    save_pheatmap_pdf(ph, path_heatmap, 21, 18)
   }
   
   
