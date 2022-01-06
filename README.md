@@ -1,4 +1,5 @@
 # HG002_assemblies_assessment
+
 Pangenomic assessment of HG002 assemblies
 
 ## Tools
@@ -34,7 +35,7 @@ mkdir -p /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/
 cd /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/
 ```
 
-Download HG002 assemblies:
+Download the HG002 assemblies:
 
 ```shell
 # Url: https://s3-us-west-2.amazonaws.com/human-pangenomics/index.html?prefix=publications/HG002_BAKEOFF_2021/HG002_Assessment/assemblies/

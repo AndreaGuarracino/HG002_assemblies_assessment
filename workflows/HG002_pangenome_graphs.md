@@ -68,7 +68,7 @@ sbatch -p lowmem -c 48 --wrap 'hostname; cd /scratch && ~/tools/pggb/pggb-5d2601
 Compacted visualization:
 
 ```shell
-cd /lizardfs/guarracino/HG002_assemblies_assessment/HG002_20211005+refs
+cd /lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_HG002/HG002_20211005+refs
 
 ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f paths -i HG002_20211005+refs.fa.gz.3525971.4030258.adf7ed8.smooth.og -L | cut -f 1 -d '#' | uniq > HG002_20211005+refs.fa.gz.3525971.4030258.adf7ed8.smooth.prefix.txt
 ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i HG002_20211005+refs.fa.gz.3525971.4030258.adf7ed8.smooth.og -o HG002_20211005+refs.fa.gz.3525971.4030258.adf7ed8.smooth.og.viz_inv.M.png -x 1500 -y 500 -a 10 -z -I Consensus_ -M HG002_20211005+refs/HG002_20211005+refs.fa.gz.3525971.4030258.adf7ed8.smooth.prefix.txt
@@ -116,6 +116,7 @@ Visualization:
 # odgi viz: color by depth
 ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i $prefix.C4.gYs.x100.og -o "$(echo $prefix| tr '.' '_' )"_C4_sorted_m.png -c 40 -w 100 -y 50 -m -B Spectral:4
 ```
+
 
 ## Graph with GRCH38 + CHM13 + asm6 + asm9 + asm23 + HG002 assemblies
 
@@ -165,57 +166,62 @@ samtools faidx refs+asm6+asm9+asm23+HG002_20211005.chr6.fa.gz
 
 ### Pangenome graph building
 
-Build the PGGB graphs:
+Build the PGGB graphs with different identity thresholds:
 
 ```shell
 mkdir -p /lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_asm6_asm9_asm23_HG002/
 
+sbatch -p headnode -c 48 --wrap 'hostname; cd /scratch && ~/tools/pggb/pggb-5d2601127e8d08b39c8b05906240e5b50e46baf3 -i /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/refs+asm6+asm9+asm23+HG002_20211005.chr6.fa.gz -o refs+asm6+asm9+asm23+HG002_20211005.chr6.s120k.l360k.p98 -t 48 -s 120000 -l 360000 -p 98 --poa-params 1,19,39,3,81,1 -n 10 -k 311 -O 0.03 -T 48 -U -v -L -Y "#" ; mv /scratch/refs+asm6+asm9+asm23+HG002_20211005.chr6.s120k.l360k.p98 /lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_asm6_asm9_asm23_HG002'
+sbatch -p headnode -c 48 --wrap 'hostname; cd /scratch && ~/tools/pggb/pggb-5d2601127e8d08b39c8b05906240e5b50e46baf3 -i /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/refs+asm6+asm9+asm23+HG002_20211005.chr6.fa.gz -o refs+asm6+asm9+asm23+HG002_20211005.chr6.s120k.l360k.p95 -t 48 -s 120000 -l 360000 -p 95 --poa-params 1,9,16,2,41,1 -n 10 -k 311 -O 0.03 -T 48 -U -v -L -Y "#" ; mv /scratch/refs+asm6+asm9+asm23+HG002_20211005.chr6.s120k.l360k.p95 /lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_asm6_asm9_asm23_HG002'
+sbatch -p headnode -c 48 --wrap 'hostname; cd /scratch && ~/tools/pggb/pggb-5d2601127e8d08b39c8b05906240e5b50e46baf3 -i /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/refs+asm6+asm9+asm23+HG002_20211005.chr6.fa.gz -o refs+asm6+asm9+asm23+HG002_20211005.chr6.s120k.l360k.p90 -t 48 -s 120000 -l 360000 -p 90 --poa-params 1,4,6,2,26,1 -n 10 -k 311 -O 0.03 -T 48 -U -v -L -Y "#" ; mv /scratch/refs+asm6+asm9+asm23+HG002_20211005.chr6.s120k.l360k.p90 /lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_asm6_asm9_asm23_HG002'
+```
 
-sbatch -p headnode -c 24 --wrap 'hostname; cd /scratch && ~/tools/pggb/pggb-5d2601127e8d08b39c8b05906240e5b50e46baf3 -i /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/refs+asm6+asm9+asm23+HG002_20211005.chr6.fa.gz -o refs+asm6+asm9+asm23+HG002_20211005.chr6.s100k.l300k.p98 -t 24 -p 98 -s 100000 -n 10 -k 311 -O 0.03 -T 24 -U -v -L -V chm13:#,grch38:# ; mv /scratch/refs+asm6+asm9+asm23+HG002_20211005.chr6.s100k.l300k.p98 /lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_asm6_asm9_asm23_HG002'
-sbatch -p headnode -c 24 --wrap 'hostname; cd /scratch && ~/tools/pggb/pggb-5d2601127e8d08b39c8b05906240e5b50e46baf3 -i /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/refs+asm6+asm9+asm23+HG002_20211005.chr6.fa.gz -o refs+asm6+asm9+asm23+HG002_20211005.chr6.s150k.l450k.p98 -t 24 -p 98 -s 150000 -n 10 -k 311 -O 0.03 -T 24 -U -v -L -V chm13:#,grch38:# ; mv /scratch/refs+asm6+asm9+asm23+HG002_20211005.chr6.s150k.l450k.p98 /lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_asm6_asm9_asm23_HG002'
+Compacted visualization:
 
-sbatch -p headnode -c 24 --wrap 'hostname; cd /scratch && ~/tools/pggb/pggb-5d2601127e8d08b39c8b05906240e5b50e46baf3 -i /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/refs+asm6+asm9+asm23+HG002_20211005.chr6.fa.gz -o refs+asm6+asm9+asm23+HG002_20211005.chr6.s100k.l300k.p95 -t 24 -p 95 -s 100000 -n 10 -k 311 -O 0.03 -T 24 -U -v -L -V chm13:#,grch38:# ; mv /scratch/refs+asm6+asm9+asm23+HG002_20211005.chr6.s100k.l300k.p95 /lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_asm6_asm9_asm23_HG002'
-sbatch -p headnode -c 24 --wrap 'hostname; cd /scratch && ~/tools/pggb/pggb-5d2601127e8d08b39c8b05906240e5b50e46baf3 -i /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/refs+asm6+asm9+asm23+HG002_20211005.chr6.fa.gz -o refs+asm6+asm9+asm23+HG002_20211005.chr6.s150k.l450k.p95 -t 24 -p 95 -s 150000 -n 10 -k 311 -O 0.03 -T 24 -U -v -L -V chm13:#,grch38:# ; mv /scratch/refs+asm6+asm9+asm23+HG002_20211005.chr6.s150k.l450k.p95 /lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_asm6_asm9_asm23_HG002'
+```shell
+cd /lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_asm6_asm9_asm23_HG002/
 
-sbatch -p headnode -c 24 --wrap 'hostname; cd /scratch && ~/tools/pggb/pggb-5d2601127e8d08b39c8b05906240e5b50e46baf3 -i /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/refs+asm6+asm9+asm23+HG002_20211005.chr6.fa.gz -o refs+asm6+asm9+asm23+HG002_20211005.chr6.s100k.l300k.p90 -t 24 -p 90 -s 100000 -n 10 -k 311 -O 0.03 -T 24 -U -v -L -V chm13:#,grch38:# ; mv /scratch/refs+asm6+asm9+asm23+HG002_20211005.chr6.s100k.l300k.p90 /lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_asm6_asm9_asm23_HG002'
-sbatch -p headnode -c 24 --wrap 'hostname; cd /scratch && ~/tools/pggb/pggb-5d2601127e8d08b39c8b05906240e5b50e46baf3 -i /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/refs+asm6+asm9+asm23+HG002_20211005.chr6.fa.gz -o refs+asm6+asm9+asm23+HG002_20211005.chr6.s150k.l450k.p90 -t 24 -p 90 -s 150000 -n 10 -k 311 -O 0.03 -T 24 -U -v -L -V chm13:#,grch38:# ; mv /scratch/refs+asm6+asm9+asm23+HG002_20211005.chr6.s150k.l450k.p90 /lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_asm6_asm9_asm23_HG002'
-
-
-## contigs >= 100kbps
-sbatch -p headnode -c 48 --wrap 'hostname; cd /scratch && ~/tools/pggb/pggb-5d2601127e8d08b39c8b05906240e5b50e46baf3 -i /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/refs+asm6+asm9+asm23+HG002_20211005.chr6.100kbps.fa.gz -o refs+asm6+asm9+asm23+HG002_20211005.chr6.100kbps -t 48 -p 98 -s 100000 -n 10 -k 311 -O 0.03 -T 48 -U -v -L -V chm13:#,grch38:# ; mv /scratch/refs+asm6+asm9+asm23+HG002_20211005.chr6.100kbps /lizardfs/guarracino/HG002_assemblies_assessment/'
-
+for p in 98 95 90; do
+    path_graph=/lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_asm6_asm9_asm23_HG002/refs+asm6+asm9+asm23+HG002_20211005.chr6.s120k.l360k.p$p/refs+asm6+asm9+asm23+HG002_20211005.chr6.fa.gz.*.smooth.og
+    prefix=/lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_asm6_asm9_asm23_HG002/refs+asm6+asm9+asm23+HG002_20211005.chr6.s120k.l360k.p$p/$(basename ${path_graph} .og)
+        
+  ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f paths -i ${path_graph} -L | cut -f 1 -d '#' | uniq > ${prefix}.prefix.txt
+  ~/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i ${path_graph} -o ${prefix}.viz_inv.M.png -x 1500 -y 500 -a 10 -z -I Consensus_ -M ${prefix}.prefix.txt
+done
 ```
 
 
 ### MHC _locus
 
 ```shell
-mkdir -p /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus
-cd /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus
+mkdir -p /lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_asm6_asm9_asm23_HG002/MHC_locus
+cd /lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_asm6_asm9_asm23_HG002/MHC_locus
 
-path_graph=/lizardfs/guarracino/HG002_assemblies_assessment/refs+asm6+asm9+asm23+HG002_20211005.chr6.1Mbps/refs+asm6+asm9+asm23+HG002_20211005.chr6.1Mbps.fa.gz.338ca16.4030258.976bd92.smooth.og
-path_graph=/lizardfs/guarracino/HG002_assemblies_assessment/refs+asm6+asm9+asm23+HG002_20211005.chr6.500kbps/refs+asm6+asm9+asm23+HG002_20211005.chr6.500kbps.fa.gz.338ca16.4030258.976bd92.smooth.og
-path_graph=/lizardfs/guarracino/HG002_assemblies_assessment/refs+asm6+asm9+asm23+HG002_20211005.chr6.100kbps/refs+asm6+asm9+asm23+HG002_20211005.chr6.100kbps.fa.gz.338ca16.4030258.976bd92.smooth.og
-path_graph=/lizardfs/guarracino/HG002_assemblies_assessment/refs+asm6+asm9+asm23+HG002_20211005.chr6/refs+asm6+asm9+asm23+HG002_20211005.chr6.fa.gz.338ca16.4030258.976bd92.smooth.og
-
-path_graph=/lizardfs/guarracino/HG002_assemblies_assessment/refs+asm6+asm9+asm23+HG002_20211005.chr6.s150k/refs+asm6+asm9+asm23+HG002_20211005.chr6.fa.gz.181272d.4030258.976bd92.smooth.og
-prefix=$(basename ${path_graph} .og)
-
-path_graph=/scratch/refs+asm6+asm9+asm23+HG002_20211005.chr6.s150k.l450k.p95/refs+asm6+asm9+asm23+HG002_20211005.chr6.s150k.l450k.p95.fa.gz.181272d.4030258.seqwish.gfa.prep.gfa
-prefix=$(basename ${path_graph} .gfa)
-
-/home/guarracino/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f extract -i ${path_graph}  -r grch38#chr6:29000000-34000000 -o - --full-range -t 48 -P | 
-  /home/guarracino/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f sort -i - -o - --optimize |
-  /home/guarracino/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f sort -i - -o ${prefix}.mhc.og -p gYs -t 48 -P
-
-# Visualization
-/home/guarracino/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i ${prefix}.mhc.og -o ${prefix}.mhc.prefix.png -s '#' -x 1500 -c 44
-/home/guarracino/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i ${prefix}.mhc.og -o ${prefix}.mhc.N.png -N -c 44 -x 1500 
-/home/guarracino/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i ${prefix}.mhc.og -o ${prefix}.mhc.z.png -z -c 44 -x 1500 
-/home/guarracino/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i ${prefix}.mhc.og -o ${prefix}.mhc.m.png -m -c 44 -x 1500 
-/home/guarracino/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f paths -i  ${prefix}.mhc.og -L | cut -f 1 -d '#' | uniq > $prefix.prefix.txt
-/home/guarracino/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i ${prefix}.mhc.og -o ${prefix}.mhc.M.png -m -c 44 -x 1500 -M $prefix.prefix.txt
+for p in 98 95 90; do
+    mkdir -p refs+asm6+asm9+asm23+HG002_20211005.chr6.s120k.l360k.p$p
+    path_graph=/lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_asm6_asm9_asm23_HG002/refs+asm6+asm9+asm23+HG002_20211005.chr6.s120k.l360k.p$p/refs+asm6+asm9+asm23+HG002_20211005.chr6.fa.gz.*.smooth.og
+    prefix=refs+asm6+asm9+asm23+HG002_20211005.chr6.s120k.l360k.p$p/$(basename ${path_graph} .og)
+    
+    /home/guarracino/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f extract -i ${path_graph}  -r grch38#chr6:29000000-34000000 -o - --full-range -t 48 -P | 
+      /home/guarracino/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f sort -i - -o - --optimize |
+      /home/guarracino/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f sort -i - -o ${prefix}.mhc.og -p gYs -t 48 -P
+    
+    # Visualization
+    /home/guarracino/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i ${prefix}.mhc.og -o ${prefix}.mhc.prefix.png -s '#' -x 1500 -c 64
+    /home/guarracino/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i ${prefix}.mhc.og -o ${prefix}.mhc.N.png -N -c 64 -x 1500 
+    /home/guarracino/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i ${prefix}.mhc.og -o ${prefix}.mhc.z.png -z -c 64 -x 1500 
+    /home/guarracino/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i ${prefix}.mhc.og -o ${prefix}.mhc.m.png -m -c 64 -x 1500 -B Spectral:4
+    /home/guarracino/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f paths -i  ${prefix}.mhc.og -L | cut -f 1 -d '#' | uniq > $prefix.prefix.txt
+    /home/guarracino/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f viz -i ${prefix}.mhc.og -o ${prefix}.mhc.M.png -m -c 64 -x 1500 -M $prefix.prefix.txt
+    
+#    /home/guarracino/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f layout -i ${prefix}.mhc.og -o ${prefix}.mhc.lay -T ${prefix}.mhc.lay.tsv -t 48 -P
+#    /home/guarracino/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f draw -i ${prefix}.mhc.og -c ${prefix}.mhc.lay -p ${prefix}.mhc.lay.draw.png -H 1000
+#    
+#    /home/guarracino/tools/odgi/bin/odgi-67a7e5bb2f328888e194845a362cef9c8ccc488f view -i ${prefix}.mhc.og -g > ${prefix}.mhc.gfa
+#    Bandage image ${prefix}.mhc.gfa ${prefix}.mhc.gfa.Bandage.h2000nw500linear.png --height 2000 --nodewidth 500 --linear
+done
 ```
+
 
 
 [comment]: <> (wget https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/genes/hg38.ncbiRefSeq.gtf.gz)
