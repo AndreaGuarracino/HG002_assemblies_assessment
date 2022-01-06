@@ -5,13 +5,6 @@
 ```shell
 mkdir -p ~/tools && cd ~/tools
 
-git clone --recursive https://github.com/ekg/fastix.git
-cd fastix
-git checkout 331c1159ea16625ee79d1a82522e800c99206834
-cargo build --release
-mv target/release/fastix target/release/fastix-331c1159ea16625ee79d1a82522e800c99206834
-cd ..
-
 git clone --recursive https://github.com/ekg/wfmash.git
 cd wfmash
 git checkout 09e73eb3fcf24b8b7312b8890dd0741933f0d1cd
