@@ -54,53 +54,57 @@ meta_df <- read.table("~/git/HG002_assemblies_assessment/data/HGRC_bakeoff_HG002
   select(AbbreviatedName, InstitutionOrCons, TopLevel, Haplotype, ContigAlgorithm, Type, ContigAlgorithmBroader)
 meta_df$AbbreviatedName <- gsub(' ', '_', meta_df$AbbreviatedName)
 
-base_dir='~/Downloads/Pangenomics/HG002_bakeoff'
+base_dir <- '~/Downloads/Pangenomics/HG002_bakeoff'
 
 #dir.create(file.path(base_dir, 'Heatmaps', 'NoUtgs', 'ByChromosome'), recursive = T)
 dir.create(file.path(base_dir, 'Heatmaps', 'NoUtgs.NoAlt', 'ByChromosome'), recursive = T)
+dir.create(file.path(base_dir, 'Heatmaps', 'NoUtgs.NoAltExceptPeregrine', 'ByChromosome'), recursive = T)
 dir.create(file.path(base_dir, 'Heatmaps', 'AllAssemblies', 'ByChromosome'), recursive = T)
 #dir.create(file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs', 'ByChromosome'), recursive = T)
 dir.create(file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs.NoAlt', 'ByChromosome'), recursive = T)
+dir.create(file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs.NoAltExceptPeregrine', 'ByChromosome'), recursive = T)
 dir.create(file.path(base_dir, 'ClassicalMultidimensionalScaling', 'AllAssemblies', 'ByChromosome'), recursive = T)
+
 
 for (N in c('All', 'XY', '1to22', seq(1, 22))){
   # Input matrix of distances
   if (N == 'All') {
-    path_chrN = file.path(base_dir, paste0('HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.chr', N, '.dist.tsv'))
+    path_chrN <- file.path(base_dir, paste0('HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.chr', N, '.dist.tsv'))
   }else{
-    path_chrN = file.path(base_dir, paste0('HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Y.x100.chr', N, '.dist.tsv'))
+    path_chrN <- file.path(base_dir, paste0('HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Y.x100.chr', N, '.dist.tsv'))
   }
 
   # Read the matrix
   HG002_all <- read.table(path_chrN, sep = '\t', header = T)
   
   # NOTE: the loop doesn't work for `AllAssemblies`. Set one dataset at a time
-  ##for (dataset in c('AllAssemblies', 'NoUtgs.NoAlt')) {
-  for (dataset in c('AllAssemblies')) {
+  ##for (dataset in c('AllAssemblies', 'NoUtgs.NoAlt', 'NoUtgs.NoAltExceptPeregrine')) {
+  #for (dataset in c('AllAssemblies')) {
   #for (dataset in c('NoUtgs.NoAlt')) {
+  for (dataset in c('NoUtgs.NoAltExceptPeregrine')) {
     if (dataset == 'AllAssemblies') {
       HG002_all_filtered <- HG002_all
       
-      title = paste0('AllAssemblies - chr', N)
+      title <- paste0('AllAssemblies - chr', N)
       
       if (N %in%  c('All', 'XY', '1to22')){
-        heatmaps_dir = file.path(base_dir, 'Heatmaps', 'AllAssemblies')
+        heatmaps_dir <- file.path(base_dir, 'Heatmaps', 'AllAssemblies')
       } else {
-        heatmaps_dir = file.path(base_dir, 'Heatmaps', 'AllAssemblies', 'ByChromosome')
+        heatmaps_dir <- file.path(base_dir, 'Heatmaps', 'AllAssemblies', 'ByChromosome')
       }
-      path_heatmap = file.path(heatmaps_dir, paste0('JaccardHeatmap.LongAlignments.AllAssemblies.chr', N, '.Clustering.pdf'))
+      path_heatmap <- file.path(heatmaps_dir, paste0('JaccardHeatmap.LongAlignments.AllAssemblies.chr', N, '.Clustering.pdf'))
       
       if (N %in%  c('All', 'XY', '1to22')){
-        CMS_dir = file.path(base_dir, 'ClassicalMultidimensionalScaling', 'AllAssemblies')
+        CMS_dir <- file.path(base_dir, 'ClassicalMultidimensionalScaling', 'AllAssemblies')
       } else {
-        CMS_dir = file.path(base_dir, 'ClassicalMultidimensionalScaling', 'AllAssemblies', 'ByChromosome')
+        CMS_dir <- file.path(base_dir, 'ClassicalMultidimensionalScaling', 'AllAssemblies', 'ByChromosome')
       }
-      imageD12 = file.path(CMS_dir, paste0('CMS.LongAlignments.AllAssemblies.chr', N, '.D1vsD2.noLabels.pdf'))
-      imageD23 = file.path(CMS_dir, paste0('CMS.LongAlignments.AllAssemblies.chr', N, '.D12sD3.noLabels.pdf'))
-      imageD13 = file.path(CMS_dir, paste0('CMS.LongAlignments.AllAssemblies.chr', N, '.D1vsD3.noLabels.pdf'))
-      imageD12_withLabels = file.path(CMS_dir, paste0('CMS.LongAlignments.AllAssemblies.chr', N, '.D1vsD2.withLabels.pdf'))
-      imageD23_withLabels = file.path(CMS_dir, paste0('CMS.LongAlignments.AllAssemblies.chr', N, '.D2vsD3.withLabels.pdf'))
-      imageD13_withLabels = file.path(CMS_dir, paste0('CMS.LongAlignments.AllAssemblies.chr', N, '.D1vsD3.withLabels.pdf'))
+      imageD12 <- file.path(CMS_dir, paste0('CMS.LongAlignments.AllAssemblies.chr', N, '.D1vsD2.noLabels.pdf'))
+      imageD23 <- file.path(CMS_dir, paste0('CMS.LongAlignments.AllAssemblies.chr', N, '.D12sD3.noLabels.pdf'))
+      imageD13 <- file.path(CMS_dir, paste0('CMS.LongAlignments.AllAssemblies.chr', N, '.D1vsD3.noLabels.pdf'))
+      imageD12_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.AllAssemblies.chr', N, '.D1vsD2.withLabels.pdf'))
+      imageD23_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.AllAssemblies.chr', N, '.D2vsD3.withLabels.pdf'))
+      imageD13_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.AllAssemblies.chr', N, '.D1vsD3.withLabels.pdf'))
     } else if (dataset == 'NoUtgs'){
       HG002_all_filtered <- HG002_all %>%
         filter(!(
@@ -108,27 +112,54 @@ for (N in c('All', 'XY', '1to22', seq(1, 22))){
             `group.b` %in% c('Peregrine_HiFi_20kb.alt.utgs', 'Peregrine_HiFi_25kb.alt.utgs')
         ))
       
-      title = paste0('No Utgs - chr', N)
+      title <- paste0('No Utgs - chr', N)
       
       if (N %in%  c('All', 'XY', '1to22')){
-        heatmaps_dir = file.path(base_dir, 'Heatmaps', 'NoUtgs')
+        heatmaps_dir <- file.path(base_dir, 'Heatmaps', 'NoUtgs')
       } else {
-        heatmaps_dir = file.path(base_dir, 'Heatmaps', 'NoUtgs', 'ByChromosome')
+        heatmaps_dir <- file.path(base_dir, 'Heatmaps', 'NoUtgs', 'ByChromosome')
       }
-      path_heatmap = file.path(heatmaps_dir, paste0('JaccardHeatmap.LongAlignments.NoUtgs.NoAlt.chr', N, '.Clustering.pdf'))
+      path_heatmap <- file.path(heatmaps_dir, paste0('JaccardHeatmap.LongAlignments.NoUtgs.NoAlt.chr', N, '.Clustering.pdf'))
       
       
       if (N %in%  c('All', 'XY', '1to22')){
-        CMS_dir = file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs')
+        CMS_dir <- file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs')
       } else {
-        CMS_dir = file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs', 'ByChromosome')
+        CMS_dir <- file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs', 'ByChromosome')
       }
-      imageD12 = file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.chr', N, '.D1vsD2.noLabels.pdf'))
-      imageD23 = file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.chr', N, '.D12sD3.noLabels.pdf'))
-      imageD13 = file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.chr', N, '.D1vsD3.noLabels.pdf'))
-      imageD12_withLabels = file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.chr', N, '.D1vsD2.withLabels.pdf'))
-      imageD23_withLabels = file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.chr', N, '.D2vsD3.withLabels.pdf'))
-      imageD13_withLabels = file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.chr', N, '.D1vsD3.withLabels.pdf'))
+      imageD12 <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.chr', N, '.D1vsD2.noLabels.pdf'))
+      imageD23 <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.chr', N, '.D12sD3.noLabels.pdf'))
+      imageD13 <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.chr', N, '.D1vsD3.noLabels.pdf'))
+      imageD12_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.chr', N, '.D1vsD2.withLabels.pdf'))
+      imageD23_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.chr', N, '.D2vsD3.withLabels.pdf'))
+      imageD13_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.chr', N, '.D1vsD3.withLabels.pdf'))
+    } else if (dataset == 'NoUtgs.NoAltExceptPeregrine') {
+      HG002_all_filtered <- HG002_all %>%
+        filter(!(
+          `group.a` %in% c('Peregrine_HiFi_20kb.alt.utgs', 'Peregrine_HiFi_25kb.alt.utgs', 'FALCON_Unzip.alt', 'HiCanu.alt') | 
+            `group.b` %in% c('Peregrine_HiFi_20kb.alt.utgs', 'Peregrine_HiFi_25kb.alt.utgs', 'FALCON_Unzip.alt', 'HiCanu.alt')
+        ))
+      
+      title <- paste0('No Utgs and No alt except Peregrine - chr', N)
+      
+      if (N %in%  c('All', 'XY', '1to22')){
+        heatmaps_dir <- file.path(base_dir, 'Heatmaps', 'NoUtgs.NoAltExceptPeregrine')
+      } else {
+        heatmaps_dir <- file.path(base_dir, 'Heatmaps', 'NoUtgs.NoAltExceptPeregrine', 'ByChromosome')
+      }
+      path_heatmap <- file.path(heatmaps_dir, paste0('JaccardHeatmap.LongAlignments.NoUtgs.NoAltExceptPeregrine.chr', N, '.Clustering.pdf'))
+      
+      if (N %in%  c('All', 'XY', '1to22')){
+        CMS_dir <- file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs.NoAltExceptPeregrine')
+      } else {
+        CMS_dir <- file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs.NoAltExceptPeregrine', 'ByChromosome')
+      }
+      imageD12 <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAltExceptPeregrine.chr', N, '.D1vsD2.noLabels.pdf'))
+      imageD23 <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAltExceptPeregrine.chr', N, '.D2vsD3.noLabels.pdf'))
+      imageD13 <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAltExceptPeregrine.chr', N, '.D1vsD3.noLabels.pdf'))
+      imageD12_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAltExceptPeregrine.chr', N, '.D1vsD2.withLabels.pdf'))
+      imageD23_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAltExceptPeregrine.chr', N, '.D12sD3.withLabels.pdf'))
+      imageD13_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAltExceptPeregrine.chr', N, '.D1vsD3.withLabels.pdf'))
     } else if (dataset == 'NoUtgs.NoAlt'){
       HG002_all_filtered <- HG002_all %>%
         filter(!(
@@ -136,26 +167,26 @@ for (N in c('All', 'XY', '1to22', seq(1, 22))){
             `group.b` %in% c('Peregrine_HiFi_20kb.alt.utgs', 'Peregrine_HiFi_25kb.alt.utgs', 'FALCON_Unzip.alt', 'Peregrine_HiFi_20kb.alt', 'Peregrine_HiFi_25kb.alt', 'HiCanu.alt')
         ))
       
-      title = paste0('No Utgs and No alt - chr', N)
+      title <- paste0('No Utgs and No alt - chr', N)
       
       if (N %in%  c('All', 'XY', '1to22')){
-        heatmaps_dir = file.path(base_dir, 'Heatmaps', 'NoUtgs.NoAlt')
+        heatmaps_dir <- file.path(base_dir, 'Heatmaps', 'NoUtgs.NoAlt')
       } else {
-        heatmaps_dir = file.path(base_dir, 'Heatmaps', 'NoUtgs.NoAlt', 'ByChromosome')
+        heatmaps_dir <- file.path(base_dir, 'Heatmaps', 'NoUtgs.NoAlt', 'ByChromosome')
       }
-      path_heatmap = file.path(heatmaps_dir, paste0('JaccardHeatmap.LongAlignments.NoUtgs.NoAlt.chr', N, '.Clustering.pdf'))
+      path_heatmap <- file.path(heatmaps_dir, paste0('JaccardHeatmap.LongAlignments.NoUtgs.NoAlt.chr', N, '.Clustering.pdf'))
       
       if (N %in%  c('All', 'XY', '1to22')){
-        CMS_dir = file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs.NoAlt')
+        CMS_dir <- file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs.NoAlt')
       } else {
-        CMS_dir = file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs.NoAlt', 'ByChromosome')
+        CMS_dir <- file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs.NoAlt', 'ByChromosome')
       }
-      imageD12 = file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAlt.chr', N, '.D1vsD2.noLabels.pdf'))
-      imageD23 = file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAlt.chr', N, '.D2vsD3.noLabels.pdf'))
-      imageD13 = file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAlt.chr', N, '.D1vsD3.noLabels.pdf'))
-      imageD12_withLabels = file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAlt.chr', N, '.D1vsD2.withLabels.pdf'))
-      imageD23_withLabels = file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAlt.chr', N, '.D12sD3.withLabels.pdf'))
-      imageD13_withLabels = file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAlt.chr', N, '.D1vsD3.withLabels.pdf'))
+      imageD12 <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAlt.chr', N, '.D1vsD2.noLabels.pdf'))
+      imageD23 <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAlt.chr', N, '.D2vsD3.noLabels.pdf'))
+      imageD13 <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAlt.chr', N, '.D1vsD3.noLabels.pdf'))
+      imageD12_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAlt.chr', N, '.D1vsD2.withLabels.pdf'))
+      imageD23_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAlt.chr', N, '.D12sD3.withLabels.pdf'))
+      imageD13_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAlt.chr', N, '.D1vsD3.withLabels.pdf'))
     } else {
       print('No dataset')
       next
