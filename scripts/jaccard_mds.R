@@ -53,6 +53,10 @@ breaksList <- seq(0, 1, by = 0.001)
 meta_df <- read.table("~/git/HG002_assemblies_assessment/data/HGRC_bakeoff_HG002_assemblies_metadata.tsv", sep = '\t', header = T) %>%
   select(AbbreviatedName, InstitutionOrCons, TopLevel, Haplotype, ContigAlgorithm, Type, ContigAlgorithmBroader)
 meta_df$AbbreviatedName <- gsub(' ', '_', meta_df$AbbreviatedName)
+meta_df$Haplotype <- factor(
+  meta_df$Haplotype,
+  levels = c('hap1', 'hap2', 'maternal', 'paternal', 'primary', 'pseudo-hap ', 'alternate', 'unitigs')
+)
 
 base_dir <- '~/Downloads/Pangenomics/HG002_bakeoff'
 
@@ -65,6 +69,11 @@ dir.create(file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs.NoAlt
 dir.create(file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs.NoAltExceptPeregrine', 'ByChromosome'), recursive = T)
 dir.create(file.path(base_dir, 'ClassicalMultidimensionalScaling', 'AllAssemblies', 'ByChromosome'), recursive = T)
 
+#gg_color_hue <- function(n) {
+#  hues = seq(15, 375, length = n + 1)
+#  hcl(h = hues, l = 65, c = 100)[1:n]
+#}
+haplotype_colors <- c("#F8766D", "#B79F00", "#00BA38", "#00BFC4", "#619CFF", "#F564E3", "#C77CFF", "#44758B") #gg_color_hue(6) plus 2 other colors
 
 for (N in c('All', 'XY', '1to22', seq(1, 22))){
   # Input matrix of distances
@@ -77,11 +86,11 @@ for (N in c('All', 'XY', '1to22', seq(1, 22))){
   # Read the matrix
   HG002_all <- read.table(path_chrN, sep = '\t', header = T)
   
-  # NOTE: the loop doesn't work for `AllAssemblies`. Set one dataset at a time
-  ##for (dataset in c('AllAssemblies', 'NoUtgs.NoAlt', 'NoUtgs.NoAltExceptPeregrine')) {
-  #for (dataset in c('AllAssemblies')) {
+  # NOTE: the loop doesn't work for all datasets together. Set one dataset at a time
+  ###for (dataset in c('AllAssemblies', 'NoUtgs.NoAlt', 'NoUtgs.NoAltExceptPeregrine')) {
+  for (dataset in c('AllAssemblies')) {
   #for (dataset in c('NoUtgs.NoAlt')) {
-  for (dataset in c('NoUtgs.NoAltExceptPeregrine')) {
+  #for (dataset in c('NoUtgs.NoAltExceptPeregrine')) {
     if (dataset == 'AllAssemblies') {
       HG002_all_filtered <- HG002_all
       
@@ -99,12 +108,7 @@ for (N in c('All', 'XY', '1to22', seq(1, 22))){
       } else {
         CMS_dir <- file.path(base_dir, 'ClassicalMultidimensionalScaling', 'AllAssemblies', 'ByChromosome')
       }
-      imageD12 <- file.path(CMS_dir, paste0('CMS.LongAlignments.AllAssemblies.chr', N, '.D1vsD2.noLabels.pdf'))
-      imageD23 <- file.path(CMS_dir, paste0('CMS.LongAlignments.AllAssemblies.chr', N, '.D12sD3.noLabels.pdf'))
-      imageD13 <- file.path(CMS_dir, paste0('CMS.LongAlignments.AllAssemblies.chr', N, '.D1vsD3.noLabels.pdf'))
-      imageD12_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.AllAssemblies.chr', N, '.D1vsD2.withLabels.pdf'))
-      imageD23_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.AllAssemblies.chr', N, '.D2vsD3.withLabels.pdf'))
-      imageD13_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.AllAssemblies.chr', N, '.D1vsD3.withLabels.pdf'))
+      prefix = 'CMS.LongAlignments.AllAssemblies.chr'
     } else if (dataset == 'NoUtgs'){
       HG002_all_filtered <- HG002_all %>%
         filter(!(
@@ -127,12 +131,7 @@ for (N in c('All', 'XY', '1to22', seq(1, 22))){
       } else {
         CMS_dir <- file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs', 'ByChromosome')
       }
-      imageD12 <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.chr', N, '.D1vsD2.noLabels.pdf'))
-      imageD23 <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.chr', N, '.D12sD3.noLabels.pdf'))
-      imageD13 <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.chr', N, '.D1vsD3.noLabels.pdf'))
-      imageD12_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.chr', N, '.D1vsD2.withLabels.pdf'))
-      imageD23_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.chr', N, '.D2vsD3.withLabels.pdf'))
-      imageD13_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.chr', N, '.D1vsD3.withLabels.pdf'))
+      prefix = 'CMS.LongAlignments.NoUtgs.chr'
     } else if (dataset == 'NoUtgs.NoAltExceptPeregrine') {
       HG002_all_filtered <- HG002_all %>%
         filter(!(
@@ -154,12 +153,7 @@ for (N in c('All', 'XY', '1to22', seq(1, 22))){
       } else {
         CMS_dir <- file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs.NoAltExceptPeregrine', 'ByChromosome')
       }
-      imageD12 <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAltExceptPeregrine.chr', N, '.D1vsD2.noLabels.pdf'))
-      imageD23 <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAltExceptPeregrine.chr', N, '.D2vsD3.noLabels.pdf'))
-      imageD13 <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAltExceptPeregrine.chr', N, '.D1vsD3.noLabels.pdf'))
-      imageD12_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAltExceptPeregrine.chr', N, '.D1vsD2.withLabels.pdf'))
-      imageD23_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAltExceptPeregrine.chr', N, '.D12sD3.withLabels.pdf'))
-      imageD13_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAltExceptPeregrine.chr', N, '.D1vsD3.withLabels.pdf'))
+      prefix = 'CMS.LongAlignments.NoUtgs.NoAltExceptPeregrine.chr'
     } else if (dataset == 'NoUtgs.NoAlt'){
       HG002_all_filtered <- HG002_all %>%
         filter(!(
@@ -181,16 +175,22 @@ for (N in c('All', 'XY', '1to22', seq(1, 22))){
       } else {
         CMS_dir <- file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs.NoAlt', 'ByChromosome')
       }
-      imageD12 <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAlt.chr', N, '.D1vsD2.noLabels.pdf'))
-      imageD23 <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAlt.chr', N, '.D2vsD3.noLabels.pdf'))
-      imageD13 <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAlt.chr', N, '.D1vsD3.noLabels.pdf'))
-      imageD12_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAlt.chr', N, '.D1vsD2.withLabels.pdf'))
-      imageD23_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAlt.chr', N, '.D12sD3.withLabels.pdf'))
-      imageD13_withLabels <- file.path(CMS_dir, paste0('CMS.LongAlignments.NoUtgs.NoAlt.chr', N, '.D1vsD3.withLabels.pdf'))
+      prefix = 'CMS.LongAlignments.NoUtgs.NoAlt.chr'
     } else {
       print('No dataset')
       next
     }
+    
+    imageD12 <- file.path(CMS_dir, paste0(prefix, N, '.D1vsD2.noLabels.pdf'))
+    imageD23 <- file.path(CMS_dir, paste0(prefix, N, '.D2vsD3.noLabels.pdf'))
+    imageD13 <- file.path(CMS_dir, paste0(prefix, N, '.D1vsD3.noLabels.pdf'))
+    imageD14 <- file.path(CMS_dir, paste0(prefix, N, '.D1vsD4.noLabels.pdf'))
+    imageD15 <- file.path(CMS_dir, paste0(prefix, N, '.D1vsD5.noLabels.pdf'))
+    imageD12_withLabels <- file.path(CMS_dir, paste0(prefix, N, '.D1vsD2.withLabels.pdf'))
+    imageD23_withLabels <- file.path(CMS_dir, paste0(prefix, N, '.D2vsD3.withLabels.pdf'))
+    imageD13_withLabels <- file.path(CMS_dir, paste0(prefix, N, '.D1vsD3.withLabels.pdf'))
+    imageD14_withLabels <- file.path(CMS_dir, paste0(prefix, N, '.D1vsD4.withLabels.pdf'))
+    imageD15_withLabels <- file.path(CMS_dir, paste0(prefix, N, '.D1vsD5.withLabels.pdf'))
 
     print(path_chrN)
     print(title)
@@ -226,14 +226,14 @@ for (N in c('All', 'XY', '1to22', seq(1, 22))){
         column_to_rownames(var = "AbbreviatedName"),
       annotation_colors=list(
         `Haplotype` = c(
-          `alternate` = brewer.pal(n = 8, name = "Set2")[1],
-          `hap1` = brewer.pal(n = 8, name = "Set2")[2],
-          `hap2` = brewer.pal(n = 8, name = "Set2")[3],
-          `maternal` = brewer.pal(n = 8, name = "Set2")[4],
-          `paternal` = brewer.pal(n = 8, name = "Set2")[5],
-          `primary` = brewer.pal(n = 8, name = "Set2")[6],
-          `pseudo-hap ` = brewer.pal(n = 8, name = "Set2")[7],
-          `unitigs` = brewer.pal(n = 8, name = "Set2")[8]
+          `hap1` = haplotype_colors[1],
+          `hap2` = haplotype_colors[2],
+          `maternal` = haplotype_colors[3],
+          `paternal` = haplotype_colors[4],
+          `primary` = haplotype_colors[5],
+          `pseudo-hap ` = haplotype_colors[6],
+          `alternate` = haplotype_colors[7],
+          `unitigs` = haplotype_colors[8]
           ),
         `Contig Algorithm` = c(
           Diploid = brewer.pal(n = 8, name = "Dark2")[1],
@@ -252,34 +252,51 @@ for (N in c('All', 'XY', '1to22', seq(1, 22))){
   # Classical (Metric) Multidimensional Scaling
   HG002_all_wide_euclidean <- tbl2hmap(HG002_all_filtered, 'group.a', 'group.b', 'euclidean')
   
-  fit <- cmdscale(as.dist(HG002_all_wide_euclidean$mat), eig=TRUE, k = 3)
+  fit <- cmdscale(as.dist(HG002_all_wide_euclidean$mat), eig=TRUE, k = 5)
   
   fit_df <- as.data.frame(fit$points) %>%
     rownames_to_column(var = "AbbreviatedName")
   fit_and_meta_df <- merge(fit_df, meta_df) %>%
     rename(`Top Level` = TopLevel) %>%
     rename(`Contig Algorithm` = ContigAlgorithmBroader)
-  
+
   plotD1D2 <- ggplot(data = fit_and_meta_df, aes(x = V1, y = V2, label = AbbreviatedName, shape = `Top Level`, color = Haplotype)) +
+    scale_color_manual(values=haplotype_colors) +
     geom_point(size=2) + 
     xlab(paste0("Dimension 1 (", trunc(fit$eig[1]/sum(fit$eig) * 100 * 10^2)/10^2, "%)"))+
     ylab(paste0("Dimension 2 (", trunc(fit$eig[2]/sum(fit$eig) * 100 * 10^2)/10^2, "%)")) +
     ggtitle(title)
   plotD2D3 <- ggplot(data = fit_and_meta_df, aes(x = V2, y = V3, label = AbbreviatedName, shape = `Top Level`, color = Haplotype)) +
+    scale_color_manual(values=haplotype_colors) +
     geom_point(size=2) + 
     xlab(paste0("Dimension 2 (", trunc(fit$eig[2]/sum(fit$eig) * 100 * 10^2)/10^2, "%)"))+
     ylab(paste0("Dimension 3 (", trunc(fit$eig[3]/sum(fit$eig) * 100 * 10^2)/10^2, "%)")) +
     ggtitle(title)
   plotD1D3 <- ggplot(data = fit_and_meta_df, aes(x = V1, y = V3, label = AbbreviatedName, shape = `Top Level`, color = Haplotype)) +
+    scale_color_manual(values=haplotype_colors) +
     geom_point(size=2) + 
     xlab(paste0("Dimension 1 (", trunc(fit$eig[1]/sum(fit$eig) * 100 * 10^2)/10^2, "%)"))+
     ylab(paste0("Dimension 3 (", trunc(fit$eig[3]/sum(fit$eig) * 100 * 10^2)/10^2, "%)")) +
+    ggtitle(title)
+  plotD1D4 <- ggplot(data = fit_and_meta_df, aes(x = V1, y = V4, label = AbbreviatedName, shape = `Top Level`, color = Haplotype)) +
+    scale_color_manual(values=haplotype_colors) +
+    geom_point(size=2) + 
+    xlab(paste0("Dimension 1 (", trunc(fit$eig[1]/sum(fit$eig) * 100 * 10^2)/10^2, "%)"))+
+    ylab(paste0("Dimension 4 (", trunc(fit$eig[4]/sum(fit$eig) * 100 * 10^2)/10^2, "%)")) +
+    ggtitle(title)
+  plotD1D5 <- ggplot(data = fit_and_meta_df, aes(x = V1, y = V5, label = AbbreviatedName, shape = `Top Level`, color = Haplotype)) +
+    scale_color_manual(values=haplotype_colors) +
+    geom_point(size=2) + 
+    xlab(paste0("Dimension 1 (", trunc(fit$eig[1]/sum(fit$eig) * 100 * 10^2)/10^2, "%)"))+
+    ylab(paste0("Dimension 5 (", trunc(fit$eig[5]/sum(fit$eig) * 100 * 10^2)/10^2, "%)")) +
     ggtitle(title)
   
   if (N %in%  c('All')) {
     ggsave(plot = plotD1D2, imageD12, width = 21, height = 14,  units = "cm", dpi = 300,  bg = "transparent")
     ggsave(plot = plotD2D3, imageD23, width = 21, height = 14,  units = "cm", dpi = 300,  bg = "transparent")
     ggsave(plot = plotD1D3, imageD13, width = 21, height = 14,  units = "cm", dpi = 300,  bg = "transparent")
+    ggsave(plot = plotD1D4, imageD14, width = 21, height = 14,  units = "cm", dpi = 300,  bg = "transparent")
+    ggsave(plot = plotD1D5, imageD15, width = 21, height = 14,  units = "cm", dpi = 300,  bg = "transparent")
   }
 
   plotD1D2 <- plotD1D2 + theme(plot.title = element_text(hjust = 0.5)) + geom_text_repel(
@@ -303,9 +320,25 @@ for (N in c('All', 'XY', '1to22', seq(1, 22))){
     show.legend  = FALSE, # to hide the `a` from the legend
     max.overlaps=Inf
   )
+  plotD1D4 <- plotD1D4 + theme(plot.title = element_text(hjust = 0.5)) + geom_text_repel(
+    size=3,
+    max.iter=40000,
+    max.time=2,
+    show.legend  = FALSE, # to hide the `a` from the legend
+    max.overlaps=Inf
+  )
+  plotD1D5 <- plotD1D5 + theme(plot.title = element_text(hjust = 0.5)) + geom_text_repel(
+    size=3,
+    max.iter=40000,
+    max.time=2,
+    show.legend  = FALSE, # to hide the `a` from the legend
+    max.overlaps=Inf
+  )
   ggsave(plot = plotD1D2, imageD12_withLabels, width = 21, height = 14,  units = "cm", dpi = 300,  bg = "transparent")
   ggsave(plot = plotD2D3, imageD23_withLabels, width = 21, height = 14,  units = "cm", dpi = 300,  bg = "transparent")
   ggsave(plot = plotD1D3, imageD13_withLabels, width = 21, height = 14,  units = "cm", dpi = 300,  bg = "transparent")
+  ggsave(plot = plotD1D4, imageD14_withLabels, width = 21, height = 14,  units = "cm", dpi = 300,  bg = "transparent")
+  ggsave(plot = plotD1D5, imageD15_withLabels, width = 21, height = 14,  units = "cm", dpi = 300,  bg = "transparent")
 }
 
 
