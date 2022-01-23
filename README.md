@@ -97,3 +97,11 @@ cat ../data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 1,1d | sed 's/"/
   ~/tools/fastix/target/release/fastix-331c1159ea16625ee79d1a82522e800c99206834 -p "${AbbreviatedName2}#" $Filename | bgzip -@ 48 -c > ${AbbreviatedName2}.fa.gz;
 done
 ```
+
+## Pangenomic assessment of HG002 assemblies
+
+[Link to the `HG002_pangenomic_assessment.md` workflow](workflows/HG002_pangenomic_assessment.md).
+
+## HG002 pangenome graphs of selected _loci_
+
+[Link to the `HG002_pangenome_graphs.md` workflow](workflows/HG002_pangenome_graphs.md).
