@@ -191,7 +191,7 @@ done
 ```
 
 
-### MHC _locus
+### MHC _locus_
 
 ```shell
 mkdir -p /lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_asm6_asm9_asm23_HG002/MHC_locus
@@ -221,6 +221,69 @@ for p in 98 95 90; do
 #    Bandage image ${prefix}.mhc.gfa ${prefix}.mhc.gfa.Bandage.h2000nw500linear.png --height 2000 --nodewidth 500 --linear
 done
 ```
+
+#### HLA typing
+
+Download HLA alleles:
+
+```shell
+mkdir -p /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus
+cd /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus
+
+wget -c ftp://ftp.ebi.ac.uk:/pub/databases/ipd/imgt/hla/fasta/hla_gen.fasta
+less hla_gen.fasta | tr " " "_" > tmp
+mv tmp hla_gen.fasta
+```
+
+Align HLA alleles against single haploptypes:
+
+```shell
+cat /lizardfs/guarracino/HG002_assemblies_assessment/data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 1,1d | sed 's/"//g' | while read -r Id Filename AbbreviatedName; do
+  AbbreviatedName2=$(echo $AbbreviatedName | sed 's/ /_/g');
+  echo $AbbreviatedName2
+  
+  PATH_ASSEMBLY=/lizardfs/guarracino/HG002_assemblies_assessment/assemblies/${AbbreviatedName2}.fa.gz
+  PATH_HLA_ALIGNMENT=/lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/${AbbreviatedName2}.hla_gen.paf
+  
+  minimap2 -t 48  -x asm5 -c --eqx ${PATH_ASSEMBLY} /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/hla_gen.fasta > ${PATH_HLA_ALIGNMENT}
+done
+```
+
+Get HLA hits for each haplotype:
+
+```shell
+cat /lizardfs/guarracino/HG002_assemblies_assessment/data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 1,1d | sed 's/"//g' | while read -r Id Filename AbbreviatedName; do
+  AbbreviatedName2=$(echo $AbbreviatedName | sed 's/ /_/g');
+  echo $AbbreviatedName2
+  
+  PATH_HLA_ALIGNMENT=/lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/${AbbreviatedName2}.hla_gen.paf
+  PATH_HLA_HITS=/lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/${AbbreviatedName2}.hla_gen.hits.tsv
+  
+  # Put thE CIGAR as last column, for easier (with `column -t | less -S`)
+  python3 /lizardfs/guarracino/HG002_assemblies_assessment/scripts/get_hla_hits.py ${PATH_HLA_ALIGNMENT} | awk -v OFS='\t' '{print$1,$2,$3,$5,$6,$7,$4}'> ${PATH_HLA_HITS}
+done
+```
+
+Get perfect HLA hits for each haplotype:
+
+```shell
+(echo AbbreviatedName Gene Allele Contig | tr ' ' '\t') > /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/HG002_all.hla_gen.hits.perfect.tsv
+cat /lizardfs/guarracino/HG002_assemblies_assessment/data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 1,1d | sed 's/"//g' | while read -r Id Filename AbbreviatedName; do
+  AbbreviatedName2=$(echo $AbbreviatedName | sed 's/ /_/g');
+  echo $AbbreviatedName2
+  
+  PATH_HLA_HITS=/lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/${AbbreviatedName2}.hla_gen.hits.tsv
+  
+  # Put thE CIGAR as last column, for easier (with `column -t | less -S`)
+  python3 /lizardfs/guarracino/HG002_assemblies_assessment/scripts/get_perfect_hla_hits.py ${PATH_HLA_HITS} |\
+    cut -f 1,3,4 |\
+    awk -v OFS='\t' -v name=$AbbreviatedName2 '{print name,$1,$2,$3}'\
+    >> /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/HG002_all.hla_gen.hits.perfect.tsv
+done
+```
+
+HG002's HLA alleles ([Supplementary Table 4](https://static-content.springer.com/esm/art%3A10.1038%2Fs41467-020-18564-9/MediaObjects/41467_2020_18564_MOESM1_ESM.pdf)).
+
 
 
 
