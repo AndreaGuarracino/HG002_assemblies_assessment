@@ -60,6 +60,9 @@ meta_df$Haplotype <- factor(
 
 base_dir <- '~/Downloads/Pangenomics/HG002_bakeoff'
 
+################################################################################
+# Jaccard and PCA analysis and plots
+#====================================
 #dir.create(file.path(base_dir, 'Heatmaps', 'NoUtgs', 'ByChromosome'), recursive = T)
 dir.create(file.path(base_dir, 'Heatmaps', 'NoUtgs.NoAlt', 'ByChromosome'), recursive = T)
 dir.create(file.path(base_dir, 'Heatmaps', 'NoUtgs.NoAltExceptPeregrine', 'ByChromosome'), recursive = T)
@@ -108,7 +111,7 @@ for (N in c('All', 'XY', '1to22', seq(1, 22))){
       } else {
         CMS_dir <- file.path(base_dir, 'ClassicalMultidimensionalScaling', 'AllAssemblies', 'ByChromosome')
       }
-      prefix = 'CMS.LongAlignments.AllAssemblies.chr'
+      prefix <- 'CMS.LongAlignments.AllAssemblies.chr'
     } else if (dataset == 'NoUtgs'){
       HG002_all_filtered <- HG002_all %>%
         filter(!(
@@ -131,7 +134,7 @@ for (N in c('All', 'XY', '1to22', seq(1, 22))){
       } else {
         CMS_dir <- file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs', 'ByChromosome')
       }
-      prefix = 'CMS.LongAlignments.NoUtgs.chr'
+      prefix <- 'CMS.LongAlignments.NoUtgs.chr'
     } else if (dataset == 'NoUtgs.NoAltExceptPeregrine') {
       HG002_all_filtered <- HG002_all %>%
         filter(!(
@@ -153,7 +156,7 @@ for (N in c('All', 'XY', '1to22', seq(1, 22))){
       } else {
         CMS_dir <- file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs.NoAltExceptPeregrine', 'ByChromosome')
       }
-      prefix = 'CMS.LongAlignments.NoUtgs.NoAltExceptPeregrine.chr'
+      prefix <- 'CMS.LongAlignments.NoUtgs.NoAltExceptPeregrine.chr'
     } else if (dataset == 'NoUtgs.NoAlt'){
       HG002_all_filtered <- HG002_all %>%
         filter(!(
@@ -175,7 +178,7 @@ for (N in c('All', 'XY', '1to22', seq(1, 22))){
       } else {
         CMS_dir <- file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs.NoAlt', 'ByChromosome')
       }
-      prefix = 'CMS.LongAlignments.NoUtgs.NoAlt.chr'
+      prefix <- 'CMS.LongAlignments.NoUtgs.NoAlt.chr'
     } else {
       print('No dataset')
       next
@@ -340,6 +343,121 @@ for (N in c('All', 'XY', '1to22', seq(1, 22))){
   ggsave(plot = plotD1D4, imageD14_withLabels, width = 21, height = 14,  units = "cm", dpi = 300,  bg = "transparent")
   ggsave(plot = plotD1D5, imageD15_withLabels, width = 21, height = 14,  units = "cm", dpi = 300,  bg = "transparent")
 }
+################################################################################
+
+################################################################################
+# Systematic analysis of PCA's principal components
+#==================================================
+dir.create(file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs.NoAltExceptPeregrine', 'BestPairsMatPatSeparationInPCA'), recursive = T)
+
+## Write PCA matrixes
+for (N in c('All', 'XY', '1to22', seq(1, 22))){
+  # Input matrix of distances
+  if (N == 'All') {
+    path_chrN <- file.path(base_dir, paste0('HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.chr', N, '.dist.tsv'))
+  }else{
+    path_chrN <- file.path(base_dir, paste0('HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Y.x100.chr', N, '.dist.tsv'))
+  }
+  
+  # Read the matrix
+  HG002_all <- read.table(path_chrN, sep = '\t', header = T)
+  
+  HG002_all_filtered <- HG002_all %>%
+    filter(!(
+      `group.a` %in% c('Peregrine_HiFi_20kb.alt.utgs', 'Peregrine_HiFi_25kb.alt.utgs', 'FALCON_Unzip.alt', 'HiCanu.alt') | 
+        `group.b` %in% c('Peregrine_HiFi_20kb.alt.utgs', 'Peregrine_HiFi_25kb.alt.utgs', 'FALCON_Unzip.alt', 'HiCanu.alt')
+    ))
+  prefix <- 'CMS.LongAlignments.NoUtgs.NoAltExceptPeregrine.chr'
+  
+  # Classical (Metric) Multidimensional Scaling
+  HG002_all_wide_euclidean <- tbl2hmap(HG002_all_filtered, 'group.a', 'group.b', 'euclidean')
+  
+  fit <- cmdscale(as.dist(HG002_all_wide_euclidean$mat), eig=TRUE, k = nrow(HG002_all_wide_euclidean$mat) - 1)
+  
+  fit_df <- as.data.frame(fit$points) %>%
+    rownames_to_column(var = "AbbreviatedName")
+  fit_and_meta_df <- merge(fit_df, meta_df %>% select(AbbreviatedName, Haplotype)) 
+  fit_and_meta_mat_pat_df <- fit_and_meta_df %>% filter(Haplotype == 'maternal' | Haplotype == 'paternal')
+  
+  path_PCA_matrix <- file.path(base_dir, paste0(prefix, N, '.PCA.tsv'))
+  print(path_PCA_matrix)
+  write.table(fit_and_meta_mat_pat_df,path_PCA_matrix, sep = '\t', quote = F, row.names = F)
+}
+
+# Go to the `HG002_bakeoff_SVM_on_PCA.ipynb` notebook and produce the 'BestPairsMatPatSeparationInPCA.tsv' file
+
+BestPairsMatPatSeparationInPCA_df <-read.table(
+  file.path(base_dir, 'BestPairsMatPatSeparationInPCA.tsv'),
+  sep = '\t',
+  header = T
+)
+
+for(i in 1:nrow(BestPairsMatPatSeparationInPCA_df)) {
+  row <- BestPairsMatPatSeparationInPCA_df[i,]
+  
+  N <- as.character(row$N)
+  x <- row$PCx
+  y <- row$PCy
+  slope <- row$slope
+  intercept <- row$intercept
+  print(N)
+
+  # Input matrix of distances
+  if (N == 'All') {
+    path_chrN <- file.path(base_dir, paste0('HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.chr', N, '.dist.tsv'))
+  }else{
+    path_chrN <- file.path(base_dir, paste0('HG002_all.s100k.l300k.p98.n45.k16.seqwish.k79.B50M.Y.x100.chr', N, '.dist.tsv'))
+  }
+  
+  # Read the matrix
+  HG002_all <- read.table(path_chrN, sep = '\t', header = T)
+  
+  HG002_all_filtered <- HG002_all %>%
+    filter(!(
+      `group.a` %in% c('Peregrine_HiFi_20kb.alt.utgs', 'Peregrine_HiFi_25kb.alt.utgs', 'FALCON_Unzip.alt', 'HiCanu.alt') | 
+        `group.b` %in% c('Peregrine_HiFi_20kb.alt.utgs', 'Peregrine_HiFi_25kb.alt.utgs', 'FALCON_Unzip.alt', 'HiCanu.alt')
+    ))
+  title <- paste0('No Utgs and No alt except Peregrine - chr', N)
+  CMS_dir <- file.path(base_dir, 'ClassicalMultidimensionalScaling', 'NoUtgs.NoAltExceptPeregrine', 'BestPairsMatPatSeparationInPCA')
+  prefix <- 'CMS.LongAlignments.NoUtgs.NoAltExceptPeregrine.chr'
+  
+  imageDXDY <- file.path(CMS_dir, paste0(prefix, N, '.BestMatPatSeparation.D', x, 'vsD', y, '.noLabels.pdf'))
+  imageDXDY_withLabels <- file.path(CMS_dir, paste0(prefix, N, '.BestMatPatSeparation.D', x, 'vsD', y, '.withLabels.pdf'))
+
+  # Classical (Metric) Multidimensional Scaling
+  HG002_all_wide_euclidean <- tbl2hmap(HG002_all_filtered, 'group.a', 'group.b', 'euclidean')
+  
+  fit <- cmdscale(as.dist(HG002_all_wide_euclidean$mat), eig=TRUE, k = nrow(HG002_all_wide_euclidean$mat) - 1)
+  
+  fit_df <- as.data.frame(fit$points) %>%
+    rownames_to_column(var = "AbbreviatedName")
+  fit_and_meta_df <- merge(fit_df, meta_df) %>%
+    rename(`Top Level` = TopLevel) %>%
+    rename(`Contig Algorithm` = ContigAlgorithmBroader)
+  
+  #n=9
+  PCx <- paste0('V', x)
+  PCy <- paste0('V', y)
+  plotDXDY <- ggplot(data = fit_and_meta_df, aes_string(x = PCx, y = PCy, label = "`AbbreviatedName`", shape = "`Top Level`", color = "`Haplotype`")) +
+    scale_color_manual(values=haplotype_colors) +
+    geom_point(size=2) + 
+    xlab(paste0("Dimension ", x, " (", trunc(fit$eig[x]/sum(fit$eig) * 100 * 10^2)/10^2, "%)")) +
+    ylab(paste0("Dimension ", y, " (", trunc(fit$eig[y]/sum(fit$eig) * 100 * 10^2)/10^2, "%)")) +
+    ggtitle(title) + 
+    geom_abline(slope = slope, intercept = intercept, size = 0.2)
+  plotDXDY
+  ggsave(plot = plotDXDY, imageDXDY, width = 21, height = 14,  units = "cm", dpi = 300,  bg = "transparent")
+  
+  plotDXDY <- plotDXDY + theme(plot.title = element_text(hjust = 0.5)) + geom_text_repel(
+    size=3,
+    max.iter=40000,
+    max.time=2,
+    show.legend  = FALSE, # to hide the `a` from the legend
+    max.overlaps=Inf
+  )
+  ggsave(plot = plotDXDY, imageDXDY_withLabels, width = 21, height = 14,  units = "cm", dpi = 300,  bg = "transparent")
+}
+################################################################################
 
 
 # Old tests
@@ -535,5 +653,3 @@ if (FALSE) {
                repel = TRUE     # Avoid text overlapping
   )
 }
-
-
