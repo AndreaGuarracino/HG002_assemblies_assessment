@@ -122,7 +122,7 @@ Visualization:
 
 ### Partitioning
 
-Map `asm6 + asm9 + asm23 + HG002` assembly against the scaffolded references:
+Map `asm6 + asm9 + asm23 + HG002` assemblies against the scaffolded references:
 
 ```shell
 zcat Trio_Flye_ONT_std.pat.fa.gz Trio_Flye_ONT_std.mat.fa.gz \
@@ -222,7 +222,7 @@ for p in 98 95 90; do
 done
 ```
 
-#### HLA typing
+## HLA typing
 
 Download HLA alleles:
 
@@ -235,7 +235,7 @@ less hla_gen.fasta | tr " " "_" > tmp
 mv tmp hla_gen.fasta
 ```
 
-Align HLA alleles against single haploptypes:
+Align HLA alleles against (all) single haploptypes:
 
 ```shell
 cat /lizardfs/guarracino/HG002_assemblies_assessment/data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 1,1d | sed 's/"//g' | while read -r Id Filename AbbreviatedName; do
@@ -280,6 +280,24 @@ cat /lizardfs/guarracino/HG002_assemblies_assessment/data/HGRC_bakeoff_HG002_ass
     awk -v OFS='\t' -v name=$AbbreviatedName2 '{print name,$1,$2,$3}'\
     >> /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/HG002_all.hla_gen.hits.perfect.tsv
 done
+```
+
+Prepare tables with the perfect HLA hits:
+
+```shell
+cat /lizardfs/guarracino/HG002_assemblies_assessment/data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 1,1d | sed 's/"//g' | while read -r Id Filename AbbreviatedName; do
+  AbbreviatedName2=$(echo $AbbreviatedName | sed 's/ /_/g');
+  echo $AbbreviatedName2 >> /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/HG002_all.haplotypes.txt
+done
+
+python3 /lizardfs/guarracino/HG002_assemblies_assessment/scripts/get_hla_table.py \
+  /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/scripts/HG002_all.hla_gen.hits.perfect.tsv \
+  scripts/HG002_all.haplotypes.txt Y \
+  > /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/HG002_all.hla_gen.hits.perfect.gene_vs_haplotype.tsv
+python3 /lizardfs/guarracino/HG002_assemblies_assessment/scripts/get_hla_table.py \
+  /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/scripts/HG002_all.hla_gen.hits.perfect.tsv \
+  scripts/HG002_all.haplotypes.txt N \
+  > /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/HG002_all.hla_gen.hits.perfect.haplotype_vs_gene.tsv
 ```
 
 HG002's HLA alleles ([Supplementary Table 4](https://static-content.springer.com/esm/art%3A10.1038%2Fs41467-020-18564-9/MediaObjects/41467_2020_18564_MOESM1_ESM.pdf)).
