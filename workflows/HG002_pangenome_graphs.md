@@ -233,9 +233,10 @@ cd /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus
 wget -c ftp://ftp.ebi.ac.uk:/pub/databases/ipd/imgt/hla/fasta/hla_gen.fasta
 less hla_gen.fasta | tr " " "_" > tmp
 mv tmp hla_gen.fasta
+samtools faidx hla_gen.fasta
 ```
 
-Align HLA alleles against (all) single haploptypes:
+Map and align HLA alleles against (all) single haploptypes:
 
 ```shell
 cat /lizardfs/guarracino/HG002_assemblies_assessment/data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 1,1d | sed 's/"//g' | while read -r Id Filename AbbreviatedName; do
@@ -245,7 +246,7 @@ cat /lizardfs/guarracino/HG002_assemblies_assessment/data/HGRC_bakeoff_HG002_ass
   PATH_ASSEMBLY=/lizardfs/guarracino/HG002_assemblies_assessment/assemblies/${AbbreviatedName2}.fa.gz
   PATH_HLA_ALIGNMENT=/lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/${AbbreviatedName2}.hla_gen.paf
   
-  minimap2 -t 48  -x asm5 -c --eqx ${PATH_ASSEMBLY} /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/hla_gen.fasta > ${PATH_HLA_ALIGNMENT}
+  minimap2 -t 48 -x asm5 -c --eqx ${PATH_ASSEMBLY} /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/hla_gen.fasta > ${PATH_HLA_ALIGNMENT}
 done
 ```
 
@@ -259,7 +260,7 @@ cat /lizardfs/guarracino/HG002_assemblies_assessment/data/HGRC_bakeoff_HG002_ass
   PATH_HLA_ALIGNMENT=/lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/${AbbreviatedName2}.hla_gen.paf
   PATH_HLA_HITS=/lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/${AbbreviatedName2}.hla_gen.hits.tsv
   
-  # Put thE CIGAR as last column, for easier (with `column -t | less -S`)
+  # Put the CIGAR as last column, for easier (with `column -t | less -S`)
   python3 /lizardfs/guarracino/HG002_assemblies_assessment/scripts/get_hla_hits.py ${PATH_HLA_ALIGNMENT} | awk -v OFS='\t' '{print$1,$2,$3,$5,$6,$7,$4}'> ${PATH_HLA_HITS}
 done
 ```
@@ -285,22 +286,153 @@ done
 Prepare tables with the perfect HLA hits:
 
 ```shell
+PATH_HAPLOTYPES_TXT=/lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/HG002_all.haplotypes.txt
+
 cat /lizardfs/guarracino/HG002_assemblies_assessment/data/HGRC_bakeoff_HG002_assemblies_v3_renaming.tsv | sed 1,1d | sed 's/"//g' | while read -r Id Filename AbbreviatedName; do
   AbbreviatedName2=$(echo $AbbreviatedName | sed 's/ /_/g');
-  echo $AbbreviatedName2 >> /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/HG002_all.haplotypes.txt
+  echo $AbbreviatedName2 >> ${PATH_HAPLOTYPES_TXT}
 done
 
 python3 /lizardfs/guarracino/HG002_assemblies_assessment/scripts/get_hla_table.py \
-  /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/scripts/HG002_all.hla_gen.hits.perfect.tsv \
-  scripts/HG002_all.haplotypes.txt Y \
+  /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/HG002_all.hla_gen.hits.perfect.tsv \
+  ${PATH_HAPLOTYPES_TXT}\
+  Y\
   > /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/HG002_all.hla_gen.hits.perfect.gene_vs_haplotype.tsv
 python3 /lizardfs/guarracino/HG002_assemblies_assessment/scripts/get_hla_table.py \
-  /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/scripts/HG002_all.hla_gen.hits.perfect.tsv \
-  scripts/HG002_all.haplotypes.txt N \
+  /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/HG002_all.hla_gen.hits.perfect.tsv \
+  ${PATH_HAPLOTYPES_TXT}\
+  N \
   > /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/HG002_all.hla_gen.hits.perfect.haplotype_vs_gene.tsv
 ```
 
+Take most supported alleles:
+
+```shell
+sed 1,1d /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/HG002_all.hla_gen.hits.perfect.gene_vs_haplotype.tsv |\
+  cut -f 2- | tr '\t' '\n' | grep -v "^$" | cut -f 1 -d '(' | sort | uniq -c | sort -k 2 -t '_' |\
+  awk '{if ($1 > 3) {print $2}}' \
+  >> /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/HG002_all.hla_gen.hits.perfect.most_supported.txt
+
+mkdir -p /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/hla_most_supported_alleles/
+cat /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/HG002_all.hla_gen.hits.perfect.most_supported.txt | while read f; do
+  echo $f
+  f2=$(echo $f | tr ':' '_' | tr '*' '_')
+
+  samtools faidx hla_gen.fasta $f \
+    > /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/hla_most_supported_alleles/$f2.fa
+  samtools faidx /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/hla_most_supported_alleles/$f2.fa
+done
+```
+
+Take HG002's contigs that hit HLA genes:
+
+```shell
+PATH_CONTIGS_HITTING_HLA=/lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/HG002_all.contigs.hla_gen.hits.txt
+
+cut -f 4 /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/*.hla_gen.hits.tsv | sort | uniq \
+  > ${PATH_CONTIGS_HITTING_HLA}
+
+samtools faidx /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/HG002_all.fa.gz $(cat ${PATH_CONTIGS_HITTING_HLA}) \
+  > /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/HG002_all.contigs.hla_gen.hits.fa
+```
+
+Map and align HG002's contigs against the most supported HLA alleles (retain only primary alignments):
+
+```shell
+#guix install python-pysam
+
+cat /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/HG002_all.hla_gen.hits.perfect.most_supported.txt | while read f; do
+  echo $f
+  f2=$(echo $f | tr ':' '_' | tr '*' '_')
+  
+  minimap2 -t 48 -x asm5 -c --eqx -a \
+    /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/hla_most_supported_alleles/$f2.fa \
+    /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/HG002_all.contigs.hla_gen.hits.fa |\
+    # retain only primary alignments
+    samtools view -h -F 2048 |\
+    samtools sort -@ 48 -l 9 \
+    > /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/hla_most_supported_alleles/$f2.bam
+  samtools index /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/hla_most_supported_alleles/$f2.bam
+  
+  python3 /lizardfs/guarracino/HG002_assemblies_assessment/scripts/removeclipping.py \
+    /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/hla_most_supported_alleles/$f2.bam \
+    /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/hla_most_supported_alleles/$f2.clipped.bam
+  samtools index /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/hla_most_supported_alleles/$f2.clipped.bam
+done
+```
+
+Take pictures of the alignments:
+
+```shell
+#guix install unzip
+#guix install xvfb-run
+#cd /home/guarracino/tools/
+#wget -c https://data.broadinstitute.org/igv/projects/downloads/2.12/IGV_Linux_2.12.0_WithJava.zip
+#unzip IGV_Linux_2.12.0_WithJava.zip && rm IGV_Linux_2.12.0_WithJava.zip
+# Make `igv.hacked.sh` (xvfb-run --auto-servernum --server-num=1 java -showversion --module-path="${prefix}/lib" -Xmx100g) 
+#   by looking at https://janbio.home.blog/2020/09/16/igv-batch-snapshot-from-command-line/
+
+cat /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/HG002_all.hla_gen.hits.perfect.most_supported.txt | while read f; do
+  echo $f
+  f2=$(echo $f | tr ':' '_' | tr '*' '_')
+  
+  # Prepare config file
+  #https://github.com/igvteam/igv/wiki/Batch-commandsZZ
+  echo "new" > igv-batch.$f2.config
+  echo "genome /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/hla_most_supported_alleles/$f2.fa" >> igv-batch.$f2.config
+  echo "load /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/hla_most_supported_alleles/$f2.clipped.bam" >> igv-batch.$f2.config
+  echo "snapshotDirectory /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/hla_most_supported_alleles/" >> igv-batch.$f2.config
+  echo "preference SAM.SHOW_SOFT_CLIPPED false" >> igv-batch.$f2.config
+  echo "group STRAND" >> igv-batch.$f2.config
+  echo "colorBy READ_STRAND" >> igv-batch.$f2.config
+  echo "goto $f" >> igv-batch.$f2.config
+  echo "sort position" >> igv-batch.$f2.config
+  echo "snapshot $f2.fa" >> igv-batch.$f2.config
+  echo "exit" >> igv-batch.$f2.config
+  
+  sh ~/tools/IGV_Linux_2.12.0/igv.hacked.sh -b igv-batch.config
+done
+```
+
+### Trios against specific alleles
+
+```shell
+mkdir -p /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/asm6+asm9+asm23+HG002_20211005
+
+for xxx in pat mat; do
+    echo $xxx
+    samtools faidx /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/HG002_all.fa.gz \
+      $(cut -f 4 /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/*.hla_gen.hits.tsv | sort | uniq | grep 'Trio_Flye_ONT_std\|Trio_HiFiasm\|Trio_VGP\|HG002_20211005' | grep $xxx)\
+      > /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/asm6+asm9+asm23+HG002_20211005/asm6+asm9+asm23+HG002_20211005.$xxx.fa
+done
+
+cat /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/HG002_all.hla_gen.hits.perfect.most_supported.txt | while read f; do
+    f2=$(echo $f | tr ':' '_' | tr '*' '_')
+  
+    for xxx in pat mat; do
+        echo "$xxx vs $f"
+        
+        minimap2 -t 48 -x asm5 -c --eqx -a \
+            /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/hla_most_supported_alleles/$f2.fa \
+            /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/asm6+asm9+asm23+HG002_20211005/asm6+asm9+asm23+HG002_20211005.$xxx.fa |\
+            # retain only primary alignments
+            samtools view -h -F 2048 |\
+            samtools sort -@ 48 -l 9 \
+            > /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/asm6+asm9+asm23+HG002_20211005/asm6+asm9+asm23+HG002_20211005.$xxx.vs.$f2.bam
+          samtools index /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/asm6+asm9+asm23+HG002_20211005/asm6+asm9+asm23+HG002_20211005.$xxx.vs.$f2.bam
+      
+        python3 /lizardfs/guarracino/HG002_assemblies_assessment/scripts/removeclipping.py \
+            /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/asm6+asm9+asm23+HG002_20211005/asm6+asm9+asm23+HG002_20211005.$xxx.vs.$f2.bam \
+            /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/asm6+asm9+asm23+HG002_20211005/asm6+asm9+asm23+HG002_20211005.$xxx.vs.$f2.clipped.bam
+        samtools index /lizardfs/guarracino/HG002_assemblies_assessment/MHC_locus/asm6+asm9+asm23+HG002_20211005/asm6+asm9+asm23+HG002_20211005.$xxx.vs.$f2.clipped.bam
+    done
+done
+```
+
+# https://www.nature.com/articles/s41467-020-18564-9
 HG002's HLA alleles ([Supplementary Table 4](https://static-content.springer.com/esm/art%3A10.1038%2Fs41467-020-18564-9/MediaObjects/41467_2020_18564_MOESM1_ESM.pdf)).
+
+
 
 
 
