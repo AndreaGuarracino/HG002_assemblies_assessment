@@ -433,8 +433,25 @@ done
 HG002's HLA alleles ([Supplementary Table 4](https://static-content.springer.com/esm/art%3A10.1038%2Fs41467-020-18564-9/MediaObjects/41467_2020_18564_MOESM1_ESM.pdf)).
 
 
+### MHC pangenome graph of HG002 + CHM13 + GRCH38
 
+Take references and MHC-containing contigs of HG002 assembly:
 
+```shell
+mkdir -p /lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_HG002
+
+cat \
+  <(samtools faidx /lizardfs/guarracino/HG002_assemblies_assessment/references/grch38.fa grch38#chr6) \
+  <(samtools faidx /lizardfs/guarracino/HG002_assemblies_assessment/references/chm13.fa chm13#chr6) \
+  <(samtools faidx /lizardfs/guarracino/HG002_assemblies_assessment/assemblies/HG002_all.fa.gz $(echo HG002_20211005.mat#S6 HG002_20211005.pat#S6 | tr ' ' '\n') ) |\
+  bgzip -@ 48 -c > /lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_HG002/grch38+chm13+hg002.chr6.fa.gz
+samtools faidx /lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_HG002/grch38+chm13+hg002.chr6.fa.gz
+```
+
+```shell
+sbatch -p workers -c 48 --wrap 'hostname; cd /scratch && ~/tools/pggb/pggb-5d2601127e8d08b39c8b05906240e5b50e46baf3 -i /lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_HG002/grch38+chm13+hg002.chr6.fa.gz -o grch38+chm13+hg002.chr6.s100k.l300k.p90 -t 48 -s 100000 -l 300000 -p 90 --poa-params 1,4,6,2,26,1 -n 4 -k 311 -O 0.1 -T 48 -U -v -L -Y "#" --resume ; mv /scratch/grch38+chm13+hg002.chr6.s100k.l300k.p90 /lizardfs/guarracino/HG002_assemblies_assessment/GRCH38_CHM13_HG002'
+
+```
 
 
 [comment]: <> (wget https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/genes/hg38.ncbiRefSeq.gtf.gz)
