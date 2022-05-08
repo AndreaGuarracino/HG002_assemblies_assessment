@@ -223,9 +223,9 @@ for (N in c('All', 'XY', '1to22', seq(1, 22))){
           Haplotype,
           ContigAlgorithmBroader
         ) %>%
-        rename(`Institution or Consortium` = InstitutionOrCons) %>%
-        rename(`Top Level` = TopLevel) %>%
-        rename(`Contig Algorithm` = ContigAlgorithmBroader) %>%
+        dplyr::rename(`Institution or Consortium` = InstitutionOrCons) %>%
+        dplyr::rename(`Top Level` = TopLevel) %>%
+        dplyr::rename(`Contig Algorithm` = ContigAlgorithmBroader) %>%
         column_to_rownames(var = "AbbreviatedName"),
       annotation_colors=list(
         `Haplotype` = c(
@@ -260,8 +260,8 @@ for (N in c('All', 'XY', '1to22', seq(1, 22))){
   fit_df <- as.data.frame(fit$points) %>%
     rownames_to_column(var = "AbbreviatedName")
   fit_and_meta_df <- merge(fit_df, meta_df) %>%
-    rename(`Top Level` = TopLevel) %>%
-    rename(`Contig Algorithm` = ContigAlgorithmBroader)
+    dplyr::rename(`Top Level` = TopLevel) %>%
+    dplyr::rename(`Contig Algorithm` = ContigAlgorithmBroader)
 
   plotD1D2 <- ggplot(data = fit_and_meta_df, aes(x = V1, y = V2, label = AbbreviatedName, shape = `Top Level`, color = Haplotype)) +
     scale_color_manual(values=haplotype_colors) +
@@ -432,8 +432,8 @@ for(i in 1:nrow(BestPairsMatPatSeparationInPCA_df)) {
   fit_df <- as.data.frame(fit$points) %>%
     rownames_to_column(var = "AbbreviatedName")
   fit_and_meta_df <- merge(fit_df, meta_df) %>%
-    rename(`Top Level` = TopLevel) %>%
-    rename(`Contig Algorithm` = ContigAlgorithmBroader)
+    dplyr::rename(`Top Level` = TopLevel) %>%
+    dplyr::rename(`Contig Algorithm` = ContigAlgorithmBroader)
   
   #n=9
   PCx <- paste0('V', x)
