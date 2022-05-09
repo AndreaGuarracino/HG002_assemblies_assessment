@@ -51,12 +51,16 @@ save_pheatmap_pdf <- function(x, filename, width, height) {
 breaksList <- seq(0, 1, by = 0.001)
 
 meta_df <- read.table("~/git/HG002_assemblies_assessment/data/HGRC_bakeoff_HG002_assemblies_metadata.tsv", sep = '\t', header = T) %>%
-  select(AbbreviatedName, InstitutionOrCons, TopLevel, Haplotype, ContigAlgorithm, Type, ContigAlgorithmBroader)
+  select(Id, AbbreviatedName, InstitutionOrCons, TopLevel, Haplotype, ContigAlgorithm, Type, ContigAlgorithmBroader)
 meta_df$AbbreviatedName <- gsub(' ', '_', meta_df$AbbreviatedName)
 meta_df$Haplotype <- factor(
   meta_df$Haplotype,
   levels = c('hap1', 'hap2', 'maternal', 'paternal', 'primary', 'pseudo-hap ', 'alternate', 'unitigs')
 )
+
+# Add new label for PCA plots
+meta_df$IdType <- paste(meta_df$Id, meta_df$ContigAlgorithmBroader, sep = '#')
+meta_df$IdType <-sub(" .*", "", meta_df$IdType) # Remove stuff after the first space
 
 base_dir <- '~/Downloads/Pangenomics/HG002_bakeoff'
 
@@ -91,9 +95,9 @@ for (N in c('All', 'XY', '1to22', seq(1, 22))){
   
   # NOTE: the loop doesn't work for all datasets together. Set one dataset at a time
   ###for (dataset in c('AllAssemblies', 'NoUtgs.NoAlt', 'NoUtgs.NoAltExceptPeregrine')) {
-  for (dataset in c('AllAssemblies')) {
+  #for (dataset in c('AllAssemblies')) {
   #for (dataset in c('NoUtgs.NoAlt')) {
-  #for (dataset in c('NoUtgs.NoAltExceptPeregrine')) {
+  for (dataset in c('NoUtgs.NoAltExceptPeregrine')) {
     if (dataset == 'AllAssemblies') {
       HG002_all_filtered <- HG002_all
       
@@ -263,6 +267,10 @@ for (N in c('All', 'XY', '1to22', seq(1, 22))){
     dplyr::rename(`Top Level` = TopLevel) %>%
     dplyr::rename(`Contig Algorithm` = ContigAlgorithmBroader)
 
+  # Options tried during the review:
+  # - ggplot(data = fit_and_meta_df, aes(x = V1, y = V2, label = IdType, shape = `Top Level`, color = Haplotype)) +
+  # - ggplot(data = fit_and_meta_df, aes(x = V1, y = V2, label = Id, shape = `Contig Algorithm`, color = Haplotype)) +
+  # - ggplot(data = fit_and_meta_df, aes(x = V1, y = V2, label = Id, shape = `Top Level`, color = Haplotype)) +
   plotD1D2 <- ggplot(data = fit_and_meta_df, aes(x = V1, y = V2, label = AbbreviatedName, shape = `Top Level`, color = Haplotype)) +
     scale_color_manual(values=haplotype_colors) +
     geom_point(size=2) + 
